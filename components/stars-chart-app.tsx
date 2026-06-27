@@ -78,22 +78,36 @@ export function StarsChartApp() {
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
 
   const [copied, setCopied] = useState(false)
+  const [copiedImage, setCopiedImage] = useState(false)
 
-  const namedStyle = useMemo(
-    () => STYLE_PRESETS.find((p) => p.name === styleName) ?? STYLE_PRESETS[0],
-    [styleName],
-  )
-  const spacing = SPACING_CONFIGS[namedStyle.spacing]
-  const font = namedStyle.font
+  async function handleCopyShare() {
+    if (!shareUrl) return
+    const absolute = `${window.location.origin}${shareUrl}`
+    await navigator.clipboard.writeText(absolute)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function handleCopyImage() {
+    if (!imageUrl) return
+    const absolute = `${window.location.origin}${imageUrl}`
+    await navigator.clipboard.writeText(absolute)
+    setCopiedImage(true)
+    setTimeout(() => setCopiedImage(false), 2000)
+  }
 
   const resolvedTitle = useMemo(() => {
     if (title.trim()) return title.trim()
-    return data ? data.fullName : "Star History"
+    if (data) return `Star history — ${data.repo}`
+    return "Star history"
   }, [title, data])
 
-  function updateStyle(patch: Partial<ChartStyle>) {
-    setStyle((s) => ({ ...s, ...patch }))
-  }
+  const namedStyle = useMemo(() => {
+    return STYLE_PRESETS.find((s) => s.name === styleName) || STYLE_PRESETS[0]
+  }, [styleName])
+
+  const font = namedStyle.font
+  const spacing = namedStyle.spacing
 
   const svg = useMemo(() => {
     if (!data) return ""
@@ -193,13 +207,24 @@ export function StarsChartApp() {
     return `/share?${params.toString()}`
   }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
-  async function handleCopyOg() {
-    if (!shareUrl) return
-    const absolute = `${window.location.origin}${shareUrl}`
-    await navigator.clipboard.writeText(absolute)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const imageUrl = useMemo(() => {
+    if (!activeRepo) return ""
+    const params = new URLSearchParams({
+      repo: activeRepo,
+      theme,
+      color: lineColor,
+      curve: style.curve,
+      lw: String(style.lineWidth),
+      grid: style.grid,
+      area: showArea ? style.areaFill : "none",
+      glow: style.glow ? "1" : "0",
+      font,
+      spacing: namedStyle.spacing,
+      style: namedStyle.name,
+    })
+    if (title.trim()) params.set("title", title.trim())
+    return `/api/og?${params.toString()}`
+  }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -433,7 +458,7 @@ export function StarsChartApp() {
               <p className="text-xs text-muted-foreground">
                 Copy the link and paste it on X, LinkedIn, or anywhere else.
               </p>
-              <Button onClick={handleCopyOg} variant="outline" size="sm" className="justify-start">
+              <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start">
                 {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
                 {copied ? "Copied to clipboard" : "Copy shareable link"}
               </Button>
