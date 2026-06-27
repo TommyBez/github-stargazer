@@ -96,6 +96,12 @@ export function StarsChartApp() {
     setTimeout(() => setCopiedImage(false), 2000)
   }
 
+  const resolvedTitle = useMemo(() => {
+    if (title.trim()) return title.trim()
+    if (data) return `Star history — ${data.repo}`
+    return "Star history"
+  }, [title, data])
+
   const svg = useMemo(() => {
     if (!data) return ""
     return buildChartSvg(data.history, {
@@ -212,14 +218,6 @@ export function StarsChartApp() {
     if (title.trim()) params.set("title", title.trim())
     return `/api/og?${params.toString()}`
   }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
-
-  async function handleCopyOg() {
-    if (!shareUrl) return
-    const absolute = `${window.location.origin}${shareUrl}`
-    await navigator.clipboard.writeText(absolute)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -453,7 +451,7 @@ export function StarsChartApp() {
               <p className="text-xs text-muted-foreground">
                 Copy the link and paste it on X, LinkedIn, or anywhere else.
               </p>
-              <Button onClick={handleCopyOg} variant="outline" size="sm" className="justify-start">
+              <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start">
                 {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
                 {copied ? "Copied to clipboard" : "Copy shareable link"}
               </Button>
