@@ -1,0 +1,351 @@
+"use client"
+
+import { useMemo, useState } from "react"
+import { Star, Download, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { buildChartSvg, THEME_PRESETS, type ThemeName } from "@/lib/chart-svg"
+import type { RepoStarData } from "@/lib/github"
+
+const PREVIEW_W = 1000
+const PREVIEW_H = 500
+
+const LINE_COLORS = [
+  { name: "Star Gold", value: "#facc15" },
+  { name: "Emerald", value: "#10b981" },
+  { name: "Sky", value: "#38bdf8" },
+  { name: "Rose", value: "#fb7185" },
+  { name: "Orange", value: "#fb923c" },
+  { name: "Slate", value: "#94a3b8" },
+]
+
+const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "midnight", label: "Midnight" },
+]
+
+export function StarsChartApp() {
+  const [repoInput, setRepoInput] = useState("")
+  const [activeRepo, setActiveRepo] = useState("")
+  const [data, setData] = useState<RepoStarData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Customization
+  const [title, setTitle] = useState("")
+  const [theme, setTheme] = useState<ThemeName>("dark")
+  const [lineColor, setLineColor] = useState(LINE_COLORS[0].value)
+  const [showArea, setShowArea] = useState(true)
+
+  const [copied, setCopied] = useState(false)
+
+  const resolvedTitle = useMemo(() => {
+    if (title.trim()) return title.trim()
+    return data ? `${data.fullName} — Stars` : "Star History"
+  }, [title, data])
+
+  const svg = useMemo(() => {
+    if (!data) return ""
+    return buildChartSvg(data.history, {
+      title: resolvedTitle,
+      lineColor,
+      fillColor: lineColor,
+      showArea,
+      width: PREVIEW_W,
+      height: PREVIEW_H,
+      ...THEME_PRESETS[theme],
+    })
+  }, [data, resolvedTitle, lineColor, showArea, theme])
+
+  async function handleGenerate(e: React.FormEvent) {
+    e.preventDefault()
+    const value = repoInput.trim()
+    if (!value) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/stars?repo=${encodeURIComponent(value)}`)
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error ?? "Something went wrong.")
+        setData(null)
+      } else {
+        setData(json as RepoStarData)
+        setActiveRepo((json as RepoStarData).fullName)
+      }
+    } catch {
+      setError("Network error. Please try again.")
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleDownloadSvg() {
+    if (!svg || !data) return
+    downloadBlob(new Blob([svg], { type: "image/svg+xml" }), `${data.name}-stars.svg`)
+  }
+
+  function handleDownloadPng() {
+    if (!svg || !data) return
+    const scale = 2
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    const dataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
+    img.onload = () => {
+      const canvas = document.createElement("canvas")
+      canvas.width = PREVIEW_W * scale
+      canvas.height = PREVIEW_H * scale
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+      ctx.scale(scale, scale)
+      ctx.drawImage(img, 0, 0, PREVIEW_W, PREVIEW_H)
+      canvas.toBlob((blob) => {
+        if (blob) downloadBlob(blob, `${data.name}-stars.png`)
+      }, "image/png")
+    }
+    img.src = dataUri
+  }
+
+  const ogUrl = useMemo(() => {
+    if (!activeRepo) return ""
+    const params = new URLSearchParams({
+      repo: activeRepo,
+      theme,
+      color: lineColor,
+    })
+    if (title.trim()) params.set("title", title.trim())
+    return `/api/og?${params.toString()}`
+  }, [activeRepo, theme, lineColor, title])
+
+  async function handleCopyOg() {
+    if (!ogUrl) return
+    const absolute = `${window.location.origin}${ogUrl}`
+    await navigator.clipboard.writeText(absolute)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+      {/* Search */}
+      <form onSubmit={handleGenerate} className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Star className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={repoInput}
+            onChange={(e) => setRepoInput(e.target.value)}
+            placeholder="owner/repo  or  https://github.com/owner/repo"
+            className="h-11 pl-9"
+            aria-label="GitHub repository"
+          />
+        </div>
+        <Button type="submit" disabled={loading} className="h-11 px-6">
+          {loading ? (
+            <>
+              <LoaderCircle className="size-4 animate-spin" />
+              Fetching
+            </>
+          ) : (
+            "Generate chart"
+          )}
+        </Button>
+      </form>
+
+      {error && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+          <TriangleAlert className="size-4 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {!data && !error && (
+        <EmptyState onPick={(r) => setRepoInput(r)} />
+      )}
+
+      {data && (
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Chart preview + downloads */}
+          <div className="flex flex-col gap-4">
+            <Card className="overflow-hidden p-0">
+              <div
+                className="w-full [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
+                // The SVG is generated by our own trusted builder.
+                dangerouslySetInnerHTML={{ __html: svg }}
+                aria-label={`Star history chart for ${data.fullName}`}
+                role="img"
+              />
+            </Card>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={handleDownloadPng} variant="default">
+                <ImageDown className="size-4" />
+                Download PNG
+              </Button>
+              <Button onClick={handleDownloadSvg} variant="secondary">
+                <FileDown className="size-4" />
+                Download SVG
+              </Button>
+              <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Star className="size-4 fill-current text-[#facc15]" />
+                {data.totalStars.toLocaleString()} stars
+              </div>
+            </div>
+          </div>
+
+          {/* Customization panel */}
+          <Card className="flex h-fit flex-col gap-5 p-5">
+            <h2 className="text-sm font-semibold">Customize</h2>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-title">Title</Label>
+              <Input
+                id="chart-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={`${data.fullName} — Stars`}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-theme">Theme</Label>
+              <Select value={theme} onValueChange={(v) => setTheme(v as ThemeName)}>
+                <SelectTrigger id="chart-theme">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {THEME_OPTIONS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Line color</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                {LINE_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setLineColor(c.value)}
+                    aria-label={c.name}
+                    aria-pressed={lineColor === c.value}
+                    className={`size-7 rounded-full border-2 transition-transform hover:scale-110 ${
+                      lineColor === c.value ? "border-foreground" : "border-transparent"
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                  />
+                ))}
+                <label className="relative size-7 cursor-pointer overflow-hidden rounded-full border border-border">
+                  <span
+                    className="block size-full"
+                    style={{
+                      background:
+                        "conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
+                    }}
+                  />
+                  <input
+                    type="color"
+                    value={lineColor}
+                    onChange={(e) => setLineColor(e.target.value)}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    aria-label="Custom color"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="area-toggle">Show area fill</Label>
+              <button
+                id="area-toggle"
+                type="button"
+                role="switch"
+                aria-checked={showArea}
+                onClick={() => setShowArea((s) => !s)}
+                className={`relative h-6 w-11 rounded-full transition-colors ${
+                  showArea ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 size-5 rounded-full bg-background transition-transform ${
+                    showArea ? "translate-x-[22px]" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* OG share */}
+            <div className="flex flex-col gap-2 border-t border-border pt-5">
+              <Label>Share as OG image</Label>
+              <p className="text-xs text-muted-foreground">
+                A dynamic 1200×630 image for social cards & READMEs.
+              </p>
+              <Button onClick={handleCopyOg} variant="outline" size="sm" className="justify-start">
+                {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
+                {copied ? "Copied to clipboard" : "Copy OG image URL"}
+              </Button>
+              <a
+                href={ogUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Open OG image in new tab
+              </a>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EmptyState({ onPick }: { onPick: (repo: string) => void }) {
+  const examples = ["vercel/next.js", "facebook/react", "shadcn-ui/ui", "tailwindlabs/tailwindcss"]
+  return (
+    <Card className="flex flex-col items-center gap-5 border-dashed px-6 py-14 text-center">
+      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+        <Star className="size-7 text-[#facc15]" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <p className="text-base font-medium">Visualize any repository&apos;s star history</p>
+        <p className="text-sm text-muted-foreground">
+          Paste a GitHub URL above, or try one of these:
+        </p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        {examples.map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            onClick={() => onPick(ex)}
+            className="rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {ex}
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+}
