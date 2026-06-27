@@ -29,13 +29,13 @@ export default function Page() {
         </p>
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
           <h1 className="font-heading text-4xl font-semibold leading-[1.05] tracking-tight text-balance [overflow-wrap:anywhere] sm:text-5xl">
-            Star history charts,
+            Your repo&apos;s star history,
             <br />
-            built for READMEs.
+            ready to share.
           </h1>
           <p className="max-w-md text-pretty leading-relaxed text-muted-foreground">
-            Plot stars-over-time for any public GitHub repository, tune the look, then export a PNG,
-            SVG, or a dynamic social image.
+            Paste any public GitHub repository, customize the look, and download a chart image
+            built for social posts.
           </p>
         </div>
         <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border pt-4 font-mono text-xs text-muted-foreground">
@@ -43,7 +43,7 @@ export default function Page() {
             <span className="size-1.5 rounded-full bg-star" aria-hidden="true" />
             Live GitHub data
           </span>
-          <span>PNG · SVG · OG image</span>
+          <span>PNG · SVG · social card</span>
           <span>No account required</span>
         </div>
       </section>

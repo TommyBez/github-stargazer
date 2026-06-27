@@ -237,9 +237,7 @@ export function StarsChartApp() {
         </div>
       )}
 
-      {!data && !error && (
-        <EmptyState onPick={(r) => setRepoInput(r)} />
-      )}
+      {!data && !error && <EmptyState />}
 
       {data && (
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -429,15 +427,15 @@ export function StarsChartApp() {
               <Switch id="glow-toggle" checked={style.glow} onCheckedChange={(v) => updateStyle({ glow: v })} />
             </div>
 
-            {/* OG share */}
+            {/* Social share */}
             <div className="flex flex-col gap-2 border-t border-border pt-5">
-              <Label>Share as OG image</Label>
+              <Label>Share on social</Label>
               <p className="text-xs text-muted-foreground">
-                A dynamic 1200×630 image for social cards & READMEs.
+                A 1200×630 image optimized for social posts.
               </p>
               <Button onClick={handleCopyOg} variant="outline" size="sm" className="justify-start">
                 {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
-                {copied ? "Copied to clipboard" : "Copy OG image URL"}
+                {copied ? "Copied to clipboard" : "Copy shareable image URL"}
               </Button>
               <a
                 href={ogUrl}
@@ -445,7 +443,7 @@ export function StarsChartApp() {
                 rel="noreferrer"
                 className="text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
-                Open OG image in new tab
+                Open image in new tab
               </a>
             </div>
           </Card>
@@ -455,37 +453,20 @@ export function StarsChartApp() {
   )
 }
 
-function EmptyState({ onPick }: { onPick: (repo: string) => void }) {
-  const examples = ["vercel/next.js", "facebook/react", "shadcn-ui/ui", "tailwindlabs/tailwindcss"]
+function EmptyState() {
   return (
-    <Card className="flex flex-col gap-6 p-6 sm:p-8">
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md bg-star-soft">
-          <Star className="size-4 fill-star text-star" />
-        </span>
-        <div className="flex flex-col gap-1">
-          <p className="font-heading text-base font-semibold tracking-tight">
-            Visualize any repository&apos;s star history
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Paste a GitHub URL above, or start from one of these:
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-col gap-px overflow-hidden rounded-md border border-border">
-        {examples.map((ex) => (
-          <button
-            key={ex}
-            type="button"
-            onClick={() => onPick(ex)}
-            className="group flex items-center justify-between bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
-          >
-            <span className="font-mono text-sm text-foreground">{ex}</span>
-            <span className="font-mono text-xs text-muted-foreground group-hover:text-foreground">
-              Plot →
-            </span>
-          </button>
-        ))}
+    <Card className="flex flex-col items-center gap-4 p-10 text-center sm:p-16">
+      <span className="flex size-12 items-center justify-center rounded-lg bg-star-soft">
+        <Star className="size-5 fill-star text-star" />
+      </span>
+      <div className="flex flex-col gap-1.5">
+        <p className="font-heading text-lg font-semibold tracking-tight">
+          Enter a repository to get started
+        </p>
+        <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+          Type any public GitHub repo above, like <span className="font-mono text-foreground">owner/repo</span>,
+          then customize and share the chart.
+        </p>
       </div>
     </Card>
   )
