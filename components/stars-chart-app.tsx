@@ -106,10 +106,11 @@ export function StarsChartApp() {
       height: PREVIEW_H,
       font,
       spacing,
+      typography: namedStyle.typography,
       ...THEME_PRESETS[theme],
       ...style,
     })
-  }, [data, resolvedTitle, lineColor, showArea, theme, style, font, spacing])
+  }, [data, resolvedTitle, lineColor, showArea, theme, style, font, spacing, namedStyle])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
@@ -185,6 +186,7 @@ export function StarsChartApp() {
       glow: style.glow ? "1" : "0",
       font,
       spacing: namedStyle.spacing,
+      style: namedStyle.name,
     })
     if (title.trim()) params.set("title", title.trim())
     return `/api/og?${params.toString()}`

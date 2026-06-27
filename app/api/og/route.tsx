@@ -5,6 +5,7 @@ import {
   formatNumber,
   THEME_PRESETS,
   SPACING_CONFIGS,
+  STYLE_PRESETS,
   type ThemeName,
   type SpacingName,
   type FontFamily,
@@ -116,6 +117,17 @@ export async function GET(request: Request) {
   const spacingKey = (searchParams.get("spacing") as SpacingName) ?? "comfortable"
   const spacingCfg = SPACING_CONFIGS[spacingKey] ?? SPACING_CONFIGS.comfortable
 
+  // Typographic treatment, resolved from the named style.
+  const styleName = searchParams.get("style") ?? ""
+  const typo = STYLE_PRESETS.find((p) => p.name === styleName)?.typography ?? {
+    titleWeight: 700,
+    titleCase: "none" as const,
+    titleTracking: 0,
+    labelCase: "none" as const,
+    labelTracking: 0,
+  }
+  const titleWeight = typo.titleWeight >= 800 ? 800 : typo.titleWeight <= 400 ? 400 : 700
+
   const parsed = parseRepo(repoParam)
   const preset = THEME_PRESETS[theme] ?? THEME_PRESETS.dark
 
@@ -129,13 +141,15 @@ export async function GET(request: Request) {
   }
   const fontName = FONT_FAMILY[fontKey] ?? "Inter"
 
-  const [regular, bold] = await Promise.all([
+  const [regular, bold, heavy] = await Promise.all([
     loadGoogleFont(fontName, 400, FONT_TEXT),
     loadGoogleFont(fontName, 700, FONT_TEXT),
+    titleWeight === 800 ? loadGoogleFont(fontName, 800, FONT_TEXT) : Promise.resolve(null),
   ])
   const fonts = [
     ...(regular ? [{ name: fontName, data: regular, weight: 400 as const, style: "normal" as const }] : []),
     ...(bold ? [{ name: fontName, data: bold, weight: 700 as const, style: "normal" as const }] : []),
+    ...(heavy ? [{ name: fontName, data: heavy, weight: 800 as const, style: "normal" as const }] : []),
   ]
 
   let fallbackMessage = "Repository not found"
@@ -143,7 +157,9 @@ export async function GET(request: Request) {
     if (!parsed) throw new Error("invalid repo")
     const data = await getStarHistory(parsed.owner, parsed.name)
     const geo = computeChartGeometry(data.history, OG_W, OG_H, curve, spacingCfg.pad)
-    const heading = title ?? data.fullName
+    const rawHeading = title ?? data.fullName
+    const heading = typo.titleCase === "upper" ? rawHeading.toUpperCase() : rawHeading
+    const labelCase = (s: string) => (typo.labelCase === "upper" ? s.toUpperCase() : s)
 
     const shapesSvg = buildShapesSvg(geo, {
       bgColor: preset.bgColor,
@@ -179,7 +195,8 @@ export async function GET(request: Request) {
             left: spacingCfg.pad.left,
             display: "flex",
             fontSize: spacingCfg.titleSize,
-            fontWeight: 700,
+            fontWeight: titleWeight,
+            letterSpacing: typo.titleTracking * spacingCfg.titleSize,
           }}
         >
           {heading}
@@ -217,10 +234,11 @@ export async function GET(request: Request) {
               display: "flex",
               justifyContent: "flex-end",
               fontSize: spacingCfg.labelSize,
+              letterSpacing: typo.labelTracking * spacingCfg.labelSize,
               opacity: 0.7,
             }}
           >
-            {l.text}
+            {labelCase(l.text)}
           </div>
         ))}
 
@@ -236,10 +254,11 @@ export async function GET(request: Request) {
               display: "flex",
               justifyContent: "center",
               fontSize: spacingCfg.labelSize,
+              letterSpacing: typo.labelTracking * spacingCfg.labelSize,
               opacity: 0.7,
             }}
           >
-            {l.text}
+            {labelCase(l.text)}
           </div>
         ))}
       </div>,

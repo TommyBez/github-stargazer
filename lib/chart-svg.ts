@@ -55,23 +55,90 @@ export const SPACING_CONFIGS: Record<SpacingName, SpacingConfig> = {
   spacious: { pad: { top: 96, right: 52, bottom: 76, left: 96 }, titleSize: 26, badgeSize: 22, labelSize: 15 },
 }
 
-/** Predefined font + spacing combinations selectable from the Style menu. */
+/** Typographic treatment that gives each style a distinct visual signature. */
+export interface Typography {
+  titleWeight: number
+  titleCase: "none" | "upper"
+  titleTracking: number // letter-spacing in em
+  labelCase: "none" | "upper"
+  labelTracking: number
+}
+
+const TYPO_DEFAULT: Typography = {
+  titleWeight: 700,
+  titleCase: "none",
+  titleTracking: 0,
+  labelCase: "none",
+  labelTracking: 0,
+}
+
+/** Predefined font + spacing + typography combinations from the Style menu. */
 export interface NamedStyle {
   name: string
   font: FontFamily
   spacing: SpacingName
+  typography: Typography
 }
 
 export const STYLE_PRESETS: NamedStyle[] = [
-  { name: "Modern", font: "sans", spacing: "comfortable" },
-  { name: "Compact", font: "sans", spacing: "compact" },
-  { name: "Airy", font: "sans", spacing: "spacious" },
-  { name: "Editorial", font: "serif", spacing: "spacious" },
-  { name: "Magazine", font: "serif", spacing: "comfortable" },
-  { name: "Terminal", font: "mono", spacing: "compact" },
-  { name: "Geometric", font: "geometric", spacing: "comfortable" },
-  { name: "Display", font: "display", spacing: "spacious" },
-  { name: "Grotesque", font: "grotesque", spacing: "cozy" },
+  // Clean, balanced baseline.
+  { name: "Modern", font: "sans", spacing: "comfortable", typography: { ...TYPO_DEFAULT } },
+  // Dense data-viz: heavy title, tight tracking.
+  {
+    name: "Compact",
+    font: "sans",
+    spacing: "compact",
+    typography: { titleWeight: 800, titleCase: "none", titleTracking: -0.02, labelCase: "none", labelTracking: 0 },
+  },
+  // Light & airy: thin title, wide tracking, uppercase labels.
+  {
+    name: "Airy",
+    font: "sans",
+    spacing: "spacious",
+    typography: { titleWeight: 400, titleCase: "none", titleTracking: 0.08, labelCase: "upper", labelTracking: 0.12 },
+  },
+  // Elegant serif, understated.
+  {
+    name: "Editorial",
+    font: "serif",
+    spacing: "spacious",
+    typography: { titleWeight: 400, titleCase: "none", titleTracking: 0, labelCase: "none", labelTracking: 0 },
+  },
+  // Magazine masthead: bold uppercase serif title.
+  {
+    name: "Magazine",
+    font: "serif",
+    spacing: "comfortable",
+    typography: { titleWeight: 700, titleCase: "upper", titleTracking: 0.04, labelCase: "upper", labelTracking: 0.08 },
+  },
+  // Terminal: monospace, uppercase tracked labels.
+  {
+    name: "Terminal",
+    font: "mono",
+    spacing: "compact",
+    typography: { titleWeight: 700, titleCase: "upper", titleTracking: 0.05, labelCase: "upper", labelTracking: 0.05 },
+  },
+  // Geometric sans, slightly bold.
+  {
+    name: "Geometric",
+    font: "geometric",
+    spacing: "comfortable",
+    typography: { titleWeight: 700, titleCase: "none", titleTracking: 0.01, labelCase: "upper", labelTracking: 0.06 },
+  },
+  // Big display serif.
+  {
+    name: "Display",
+    font: "display",
+    spacing: "spacious",
+    typography: { titleWeight: 600, titleCase: "none", titleTracking: -0.01, labelCase: "none", labelTracking: 0 },
+  },
+  // Bold grotesque headline: heavy uppercase, tight.
+  {
+    name: "Grotesque",
+    font: "grotesque",
+    spacing: "cozy",
+    typography: { titleWeight: 800, titleCase: "upper", titleTracking: -0.01, labelCase: "none", labelTracking: 0 },
+  },
 ]
 
 export interface ChartOptions extends ChartStyle {
@@ -86,6 +153,7 @@ export interface ChartOptions extends ChartStyle {
   height: number
   font: FontFamily
   spacing: SpacingConfig
+  typography: Typography
 }
 
 export const THEME_PRESETS = {
@@ -255,11 +323,17 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     glow,
     font,
     spacing,
+    typography,
   } = options
 
   const fontStack = FONT_STACKS[font]
   const { pad, titleSize, badgeSize, labelSize } = spacing
   const titleBaseline = Math.round(pad.top * 0.55)
+
+  const titleText = typography.titleCase === "upper" ? title.toUpperCase() : title
+  const titleTrack = (typography.titleTracking * titleSize).toFixed(2)
+  const labelTrack = (typography.labelTracking * labelSize).toFixed(2)
+  const applyLabelCase = (s: string) => (typography.labelCase === "upper" ? s.toUpperCase() : s)
   const plotW = width - pad.left - pad.right
   const plotH = height - pad.top - pad.bottom
   const plotBottom = pad.top + plotH
@@ -297,7 +371,7 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     if (grid !== "none") {
       gridLines += `<line x1="${pad.left}" y1="${y.toFixed(2)}" x2="${(pad.left + plotW).toFixed(2)}" y2="${y.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`
     }
-    yLabels += `<text x="${pad.left - 12}" y="${(y + 4).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="${labelSize}" text-anchor="end" opacity="0.7">${formatNumber(Math.round(value))}</text>`
+    yLabels += `<text x="${pad.left - 12}" y="${(y + 4).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="${labelSize}" letter-spacing="${labelTrack}" text-anchor="end" opacity="0.7">${escapeXml(applyLabelCase(formatNumber(Math.round(value))))}</text>`
   }
 
   // X axis labels (start, middle, end) + optional vertical grid lines
@@ -308,7 +382,7 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     if (grid === "full") {
       gridLines += `<line x1="${c.x.toFixed(2)}" y1="${pad.top}" x2="${c.x.toFixed(2)}" y2="${plotBottom.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`
     }
-    xLabels += `<text x="${c.x.toFixed(2)}" y="${(plotBottom + Math.round(labelSize * 1.6)).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="${labelSize}" text-anchor="middle" opacity="0.7">${escapeXml(formatDate(points[idx].date))}</text>`
+    xLabels += `<text x="${c.x.toFixed(2)}" y="${(plotBottom + Math.round(labelSize * 1.6)).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="${labelSize}" letter-spacing="${labelTrack}" text-anchor="middle" opacity="0.7">${escapeXml(applyLabelCase(formatDate(points[idx].date)))}</text>`
   }
 
   const lastStars = points[points.length - 1].stars
@@ -337,7 +411,7 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     </filter>
   </defs>
   <rect width="${width}" height="${height}" fill="${bgColor}"/>
-  <text x="${pad.left}" y="${titleBaseline}" fill="${textColor}" font-family="${fontStack}" font-size="${titleSize}" font-weight="700">${escapeXml(title)}</text>
+  <text x="${pad.left}" y="${titleBaseline}" fill="${textColor}" font-family="${fontStack}" font-size="${titleSize}" font-weight="${typography.titleWeight}" letter-spacing="${titleTrack}">${escapeXml(titleText)}</text>
   <text x="${(width - pad.right).toFixed(2)}" y="${titleBaseline}" fill="${lineColor}" font-family="${fontStack}" font-size="${badgeSize}" font-weight="700" text-anchor="end">★ ${formatNumber(lastStars)}</text>
   ${gridLines}
   ${areaMarkup}
