@@ -3,7 +3,7 @@ import type { StarPoint } from "./github"
 export type CurveType = "smooth" | "linear" | "step"
 export type GridStyle = "full" | "horizontal" | "none"
 export type AreaFill = "gradient" | "solid"
-export type FontFamily = "sans" | "mono" | "serif" | "geometric" | "display" | "grotesque"
+export type FontFamily = "sans" | "mono" | "serif" | "display" | "hand"
 
 /** Individually-selectable visual properties (everything except font + spacing). */
 export interface ChartStyle {
@@ -26,9 +26,8 @@ export const FONT_STACKS: Record<FontFamily, string> = {
   sans: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
   mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
   serif: "ui-serif, Georgia, Cambria, Times New Roman, serif",
-  geometric: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
   display: "'Fraunces', ui-serif, Georgia, serif",
-  grotesque: "'Archivo', ui-sans-serif, system-ui, sans-serif",
+  hand: "'Caveat', 'Comic Sans MS', ui-sans-serif, cursive",
 }
 
 export interface ChartPad {
@@ -72,72 +71,56 @@ const TYPO_DEFAULT: Typography = {
   labelTracking: 0,
 }
 
-/** Predefined font + spacing + typography combinations from the Style menu. */
+/**
+ * A complete, coherent visual identity selectable from the Style menu. Beyond
+ * font + spacing + typography, a style can also flip a `sketch` rendering mode
+ * (hand-drawn wobbly lines) so the whole chart reads as a single design.
+ */
 export interface NamedStyle {
   name: string
+  description: string
   font: FontFamily
   spacing: SpacingName
   typography: Typography
+  sketch: boolean
 }
 
 export const STYLE_PRESETS: NamedStyle[] = [
-  // Clean, balanced baseline.
-  { name: "Modern", font: "sans", spacing: "comfortable", typography: { ...TYPO_DEFAULT } },
-  // Dense data-viz: heavy title, tight tracking.
+  // Clean, balanced sans-serif baseline.
   {
-    name: "Compact",
+    name: "Modern",
+    description: "Clean sans-serif",
     font: "sans",
-    spacing: "compact",
-    typography: { titleWeight: 800, titleCase: "none", titleTracking: -0.02, labelCase: "none", labelTracking: 0 },
+    spacing: "comfortable",
+    typography: { ...TYPO_DEFAULT },
+    sketch: false,
   },
-  // Light & airy: thin title, wide tracking, uppercase labels.
-  {
-    name: "Airy",
-    font: "sans",
-    spacing: "spacious",
-    typography: { titleWeight: 400, titleCase: "none", titleTracking: 0.08, labelCase: "upper", labelTracking: 0.12 },
-  },
-  // Elegant serif, understated.
+  // Refined editorial serif with generous spacing.
   {
     name: "Editorial",
-    font: "serif",
+    description: "Elegant display serif",
+    font: "display",
     spacing: "spacious",
     typography: { titleWeight: 400, titleCase: "none", titleTracking: 0, labelCase: "none", labelTracking: 0 },
+    sketch: false,
   },
-  // Magazine masthead: bold uppercase serif title.
-  {
-    name: "Magazine",
-    font: "serif",
-    spacing: "comfortable",
-    typography: { titleWeight: 700, titleCase: "upper", titleTracking: 0.04, labelCase: "upper", labelTracking: 0.08 },
-  },
-  // Terminal: monospace, uppercase tracked labels.
+  // Technical monospace, uppercase tracked labels.
   {
     name: "Terminal",
+    description: "Monospace, technical",
     font: "mono",
     spacing: "compact",
     typography: { titleWeight: 700, titleCase: "upper", titleTracking: 0.05, labelCase: "upper", labelTracking: 0.05 },
+    sketch: false,
   },
-  // Geometric sans, slightly bold.
+  // Hand-drawn: handwriting font + wobbly sketched line.
   {
-    name: "Geometric",
-    font: "geometric",
+    name: "Hand-drawn",
+    description: "Sketchy & handwritten",
+    font: "hand",
     spacing: "comfortable",
-    typography: { titleWeight: 700, titleCase: "none", titleTracking: 0.01, labelCase: "upper", labelTracking: 0.06 },
-  },
-  // Big display serif.
-  {
-    name: "Display",
-    font: "display",
-    spacing: "spacious",
-    typography: { titleWeight: 600, titleCase: "none", titleTracking: -0.01, labelCase: "none", labelTracking: 0 },
-  },
-  // Bold grotesque headline: heavy uppercase, tight.
-  {
-    name: "Grotesque",
-    font: "grotesque",
-    spacing: "cozy",
-    typography: { titleWeight: 800, titleCase: "upper", titleTracking: -0.01, labelCase: "none", labelTracking: 0 },
+    typography: { titleWeight: 700, titleCase: "none", titleTracking: 0.01, labelCase: "none", labelTracking: 0.01 },
+    sketch: true,
   },
 ]
 
@@ -154,6 +137,7 @@ export interface ChartOptions extends ChartStyle {
   font: FontFamily
   spacing: SpacingConfig
   typography: Typography
+  sketch: boolean
 }
 
 export const THEME_PRESETS = {
@@ -217,6 +201,54 @@ function buildLinePath(pts: Pt[], curve: CurveType): string {
   return pts.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(" ")
 }
 
+/** Tiny seeded PRNG so the hand-drawn wobble is identical in the live preview,
+ * the downloadable SVG/PNG, and the OG image (all derived from the same data). */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0
+  return () => {
+    a |= 0
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/** Insert jittered midpoints along each segment to fake a hand-drawn line. */
+function roughenPoints(pts: Pt[], amp: number, seed: number): Pt[] {
+  if (pts.length < 2) return pts
+  const rand = mulberry32(seed)
+  const out: Pt[] = []
+  const subdivisions = 3
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i]
+    const b = pts[i + 1]
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const len = Math.hypot(dx, dy) || 1
+    // Unit normal to the segment.
+    const nx = -dy / len
+    const ny = dx / len
+    out.push(a)
+    for (let s = 1; s < subdivisions; s++) {
+      const t = s / subdivisions
+      const j = (rand() * 2 - 1) * amp
+      out.push({ x: a.x + dx * t + nx * j, y: a.y + dy * t + ny * j })
+    }
+  }
+  out.push(pts[pts.length - 1])
+  return out
+}
+
+/** Build the data-line path, optionally roughened into a hand-drawn wobble. */
+function buildSeriesPath(pts: Pt[], curve: CurveType, sketch: boolean, width: number): string {
+  if (!sketch) return buildLinePath(pts, curve)
+  const amp = Math.max(2, width * 0.004)
+  const rough = roughenPoints(pts, amp, pts.length * 97 + 7)
+  // Smooth the jittered points so the wobble looks organic, not jagged.
+  return buildLinePath(rough, "smooth")
+}
+
 /**
  * Compute the pure geometry (paths, grid + tick positions, formatted labels)
  * for a star-history chart. Shared by the SVG download builder and the OG image
@@ -229,6 +261,7 @@ export function computeChartGeometry(
   height: number,
   curve: CurveType = "linear",
   pad: ChartPad = SPACING_CONFIGS.comfortable.pad,
+  sketch = false,
 ): ChartGeometry {
   const plotW = width - pad.left - pad.right
   const plotH = height - pad.top - pad.bottom
@@ -245,7 +278,7 @@ export function computeChartGeometry(
 
   const coords = points.map((p) => ({ x: sx(new Date(p.date).getTime()), y: sy(p.stars) }))
 
-  const linePath = buildLinePath(coords, curve)
+  const linePath = buildSeriesPath(coords, curve, sketch, width)
 
   const areaPath = coords.length
     ? `${linePath} L${coords[coords.length - 1].x.toFixed(2)},${plotBottom.toFixed(2)} L${coords[0].x.toFixed(2)},${plotBottom.toFixed(2)} Z`
@@ -324,6 +357,7 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     font,
     spacing,
     typography,
+    sketch,
   } = options
 
   const fontStack = FONT_STACKS[font]
@@ -356,7 +390,7 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     y: sy(p.stars),
   }))
 
-  const linePath = buildLinePath(coords, curve)
+  const linePath = buildSeriesPath(coords, curve, sketch, width)
   const areaPath = `${linePath} L${coords[coords.length - 1].x.toFixed(2)},${plotBottom.toFixed(
     2,
   )} L${coords[0].x.toFixed(2)},${plotBottom.toFixed(2)} Z`

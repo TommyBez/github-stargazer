@@ -107,6 +107,7 @@ export function StarsChartApp() {
       font,
       spacing,
       typography: namedStyle.typography,
+      sketch: namedStyle.sketch,
       ...THEME_PRESETS[theme],
       ...style,
     })
@@ -287,9 +288,7 @@ export function StarsChartApp() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground capitalize">
-                {font} font · {namedStyle.spacing} spacing
-              </p>
+              <p className="text-xs text-muted-foreground">{namedStyle.description}</p>
             </div>
 
             <div className="flex flex-col gap-2">

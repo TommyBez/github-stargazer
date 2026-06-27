@@ -117,15 +117,17 @@ export async function GET(request: Request) {
   const spacingKey = (searchParams.get("spacing") as SpacingName) ?? "comfortable"
   const spacingCfg = SPACING_CONFIGS[spacingKey] ?? SPACING_CONFIGS.comfortable
 
-  // Typographic treatment, resolved from the named style.
+  // Typographic treatment + hand-drawn flag, resolved from the named style.
   const styleName = searchParams.get("style") ?? ""
-  const typo = STYLE_PRESETS.find((p) => p.name === styleName)?.typography ?? {
+  const namedStyle = STYLE_PRESETS.find((p) => p.name === styleName)
+  const typo = namedStyle?.typography ?? {
     titleWeight: 700,
     titleCase: "none" as const,
     titleTracking: 0,
     labelCase: "none" as const,
     labelTracking: 0,
   }
+  const sketch = namedStyle?.sketch ?? false
   const titleWeight = typo.titleWeight >= 800 ? 800 : typo.titleWeight <= 400 ? 400 : 700
 
   const parsed = parseRepo(repoParam)
@@ -135,9 +137,8 @@ export async function GET(request: Request) {
     sans: "Inter",
     mono: "JetBrains Mono",
     serif: "Source Serif 4",
-    geometric: "Space Grotesk",
     display: "Fraunces",
-    grotesque: "Archivo",
+    hand: "Caveat",
   }
   const fontName = FONT_FAMILY[fontKey] ?? "Inter"
 
@@ -156,7 +157,7 @@ export async function GET(request: Request) {
   try {
     if (!parsed) throw new Error("invalid repo")
     const data = await getStarHistory(parsed.owner, parsed.name)
-    const geo = computeChartGeometry(data.history, OG_W, OG_H, curve, spacingCfg.pad)
+    const geo = computeChartGeometry(data.history, OG_W, OG_H, curve, spacingCfg.pad, sketch)
     const rawHeading = title ?? data.fullName
     const heading = typo.titleCase === "upper" ? rawHeading.toUpperCase() : rawHeading
     const labelCase = (s: string) => (typo.labelCase === "upper" ? s.toUpperCase() : s)
