@@ -78,21 +78,22 @@ export function StarsChartApp() {
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
 
   const [copied, setCopied] = useState(false)
+  const [copiedImage, setCopiedImage] = useState(false)
 
-  const namedStyle = useMemo(
-    () => STYLE_PRESETS.find((p) => p.name === styleName) ?? STYLE_PRESETS[0],
-    [styleName],
-  )
-  const spacing = SPACING_CONFIGS[namedStyle.spacing]
-  const font = namedStyle.font
+  async function handleCopyShare() {
+    if (!shareUrl) return
+    const absolute = `${window.location.origin}${shareUrl}`
+    await navigator.clipboard.writeText(absolute)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
-  const resolvedTitle = useMemo(() => {
-    if (title.trim()) return title.trim()
-    return data ? data.fullName : "Star History"
-  }, [title, data])
-
-  function updateStyle(patch: Partial<ChartStyle>) {
-    setStyle((s) => ({ ...s, ...patch }))
+  async function handleCopyImage() {
+    if (!imageUrl) return
+    const absolute = `${window.location.origin}${imageUrl}`
+    await navigator.clipboard.writeText(absolute)
+    setCopiedImage(true)
+    setTimeout(() => setCopiedImage(false), 2000)
   }
 
   const svg = useMemo(() => {
@@ -191,6 +192,25 @@ export function StarsChartApp() {
     })
     if (title.trim()) params.set("title", title.trim())
     return `/share?${params.toString()}`
+  }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
+
+  const imageUrl = useMemo(() => {
+    if (!activeRepo) return ""
+    const params = new URLSearchParams({
+      repo: activeRepo,
+      theme,
+      color: lineColor,
+      curve: style.curve,
+      lw: String(style.lineWidth),
+      grid: style.grid,
+      area: showArea ? style.areaFill : "none",
+      glow: style.glow ? "1" : "0",
+      font,
+      spacing: namedStyle.spacing,
+      style: namedStyle.name,
+    })
+    if (title.trim()) params.set("title", title.trim())
+    return `/api/og?${params.toString()}`
   }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
   async function handleCopyOg() {
