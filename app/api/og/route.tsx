@@ -166,20 +166,6 @@ export async function GET(request: Request) {
             {l.text}
           </div>
         ))}
-
-        {/* Footer watermark */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 14,
-            right: 36,
-            display: "flex",
-            fontSize: 13,
-            opacity: 0.5,
-          }}
-        >
-          star-history chart
-        </div>
       </div>,
       { width: OG_W, height: OG_H, fonts: fonts.length ? fonts : undefined },
     )
