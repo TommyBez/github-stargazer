@@ -8,9 +8,21 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ColorPicker } from "@/components/color-picker"
-import { buildChartSvg, THEME_PRESETS, type ThemeName } from "@/lib/chart-svg"
+import {
+  buildChartSvg,
+  THEME_PRESETS,
+  STYLE_PRESETS,
+  SPACING_CONFIGS,
+  DEFAULT_STYLE,
+  type ThemeName,
+  type ChartStyle,
+  type CurveType,
+  type GridStyle,
+  type AreaFill,
+} from "@/lib/chart-svg"
 import type { RepoStarData } from "@/lib/github"
 
 const PREVIEW_W = 1000
@@ -31,6 +43,23 @@ const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
   { value: "midnight", label: "Midnight" },
 ]
 
+const CURVE_OPTIONS: { value: CurveType; label: string }[] = [
+  { value: "linear", label: "Linear" },
+  { value: "smooth", label: "Smooth" },
+  { value: "step", label: "Step" },
+]
+
+const GRID_OPTIONS: { value: GridStyle; label: string }[] = [
+  { value: "horizontal", label: "Horizontal" },
+  { value: "full", label: "Full" },
+  { value: "none", label: "None" },
+]
+
+const AREA_OPTIONS: { value: AreaFill; label: string }[] = [
+  { value: "gradient", label: "Gradient" },
+  { value: "solid", label: "Solid" },
+]
+
 export function StarsChartApp() {
   const [repoInput, setRepoInput] = useState("")
   const [activeRepo, setActiveRepo] = useState("")
@@ -43,13 +72,28 @@ export function StarsChartApp() {
   const [theme, setTheme] = useState<ThemeName>("dark")
   const [lineColor, setLineColor] = useState(LINE_COLORS[0].value)
   const [showArea, setShowArea] = useState(true)
+  // Font + spacing are driven together by the Style menu.
+  const [styleName, setStyleName] = useState(STYLE_PRESETS[0].name)
+  // Everything else is individually selectable.
+  const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
 
   const [copied, setCopied] = useState(false)
+
+  const namedStyle = useMemo(
+    () => STYLE_PRESETS.find((p) => p.name === styleName) ?? STYLE_PRESETS[0],
+    [styleName],
+  )
+  const spacing = SPACING_CONFIGS[namedStyle.spacing]
+  const font = namedStyle.font
 
   const resolvedTitle = useMemo(() => {
     if (title.trim()) return title.trim()
     return data ? data.fullName : "Star History"
   }, [title, data])
+
+  function updateStyle(patch: Partial<ChartStyle>) {
+    setStyle((s) => ({ ...s, ...patch }))
+  }
 
   const svg = useMemo(() => {
     if (!data) return ""
@@ -60,9 +104,14 @@ export function StarsChartApp() {
       showArea,
       width: PREVIEW_W,
       height: PREVIEW_H,
+      font,
+      spacing,
+      typography: namedStyle.typography,
+      sketch: namedStyle.sketch,
       ...THEME_PRESETS[theme],
+      ...style,
     })
-  }, [data, resolvedTitle, lineColor, showArea, theme])
+  }, [data, resolvedTitle, lineColor, showArea, theme, style, font, spacing, namedStyle])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
@@ -131,10 +180,18 @@ export function StarsChartApp() {
       repo: activeRepo,
       theme,
       color: lineColor,
+      curve: style.curve,
+      lw: String(style.lineWidth),
+      grid: style.grid,
+      area: showArea ? style.areaFill : "none",
+      glow: style.glow ? "1" : "0",
+      font,
+      spacing: namedStyle.spacing,
+      style: namedStyle.name,
     })
     if (title.trim()) params.set("title", title.trim())
     return `/api/og?${params.toString()}`
-  }, [activeRepo, theme, lineColor, title])
+  }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
   async function handleCopyOg() {
     if (!ogUrl) return
@@ -218,6 +275,23 @@ export function StarsChartApp() {
             <h2 className="text-sm font-semibold">Customize</h2>
 
             <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-style">Style</Label>
+              <Select value={styleName} onValueChange={setStyleName}>
+                <SelectTrigger id="chart-style">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STYLE_PRESETS.map((p) => (
+                    <SelectItem key={p.name} value={p.name}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{namedStyle.description}</p>
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="chart-title">Title</Label>
               <Input
                 id="chart-title"
@@ -264,13 +338,89 @@ export function StarsChartApp() {
                     />
                   ))}
                 </ToggleGroup>
-                <ColorPicker value={lineColor} onChange={setLineColor} aria-label="Custom line color" />
+                <div className="mx-1 h-7 w-px bg-border" aria-hidden="true" />
+                <ColorPicker
+                  value={lineColor}
+                  onChange={setLineColor}
+                  aria-label="Custom line color"
+                  className="rounded-md"
+                />
               </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-curve">Curve</Label>
+              <Select value={style.curve} onValueChange={(v) => updateStyle({ curve: v as CurveType })}>
+                <SelectTrigger id="chart-curve">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURVE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="chart-lw">Line width</Label>
+                <span className="text-xs text-muted-foreground">{style.lineWidth.toFixed(1)}px</span>
+              </div>
+              <Slider
+                id="chart-lw"
+                min={1}
+                max={5}
+                step={0.5}
+                value={[style.lineWidth]}
+                onValueChange={(v) => updateStyle({ lineWidth: v[0] })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-grid">Grid</Label>
+              <Select value={style.grid} onValueChange={(v) => updateStyle({ grid: v as GridStyle })}>
+                <SelectTrigger id="chart-grid">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRID_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center justify-between">
               <Label htmlFor="area-toggle">Show area fill</Label>
               <Switch id="area-toggle" checked={showArea} onCheckedChange={setShowArea} />
+            </div>
+
+            {showArea && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="chart-area">Area style</Label>
+                <Select value={style.areaFill} onValueChange={(v) => updateStyle({ areaFill: v as AreaFill })}>
+                  <SelectTrigger id="chart-area">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AREA_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="glow-toggle">Glow effect</Label>
+              <Switch id="glow-toggle" checked={style.glow} onCheckedChange={(v) => updateStyle({ glow: v })} />
             </div>
 
             {/* OG share */}

@@ -157,9 +157,9 @@ export function ColorPicker({ value, onChange, className, "aria-label": ariaLabe
           background: "conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
         }}
       >
-        {/* Inner dot reflects the currently selected color */}
+        {/* Inner swatch reflects the currently selected color */}
         <span
-          className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 shadow-sm"
+          className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-white/70 shadow-sm"
           style={{ backgroundColor: value }}
         />
       </PopoverTrigger>
