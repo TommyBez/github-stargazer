@@ -7,6 +7,7 @@ import {
   SPACING_CONFIGS,
   type ThemeName,
   type SpacingName,
+  type FontFamily,
 } from "@/lib/chart-svg"
 
 export const runtime = "nodejs"
@@ -111,19 +112,22 @@ export async function GET(request: Request) {
   const grid = (searchParams.get("grid") as "full" | "horizontal" | "none") ?? "horizontal"
   const area = (searchParams.get("area") as "gradient" | "solid" | "none") ?? "gradient"
   const glow = searchParams.get("glow") === "1"
-  const fontKey = (searchParams.get("font") as "sans" | "mono" | "serif") ?? "sans"
+  const fontKey = (searchParams.get("font") as FontFamily) ?? "sans"
   const spacingKey = (searchParams.get("spacing") as SpacingName) ?? "comfortable"
   const spacingCfg = SPACING_CONFIGS[spacingKey] ?? SPACING_CONFIGS.comfortable
 
   const parsed = parseRepo(repoParam)
   const preset = THEME_PRESETS[theme] ?? THEME_PRESETS.dark
 
-  const FONT_FAMILY: Record<"sans" | "mono" | "serif", string> = {
+  const FONT_FAMILY: Record<FontFamily, string> = {
     sans: "Inter",
     mono: "JetBrains Mono",
     serif: "Source Serif 4",
+    geometric: "Space Grotesk",
+    display: "Fraunces",
+    grotesque: "Archivo",
   }
-  const fontName = FONT_FAMILY[fontKey]
+  const fontName = FONT_FAMILY[fontKey] ?? "Inter"
 
   const [regular, bold] = await Promise.all([
     loadGoogleFont(fontName, 400, FONT_TEXT),

@@ -48,6 +48,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
+      <head>
+        {/* Chart preview fonts: the inline chart SVG references these families
+            by literal name, so they must be loaded document-wide for the
+            preview and the canvas-based PNG export to render correctly. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Fraunces:wght@400;700&family=Archivo:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="font-sans antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

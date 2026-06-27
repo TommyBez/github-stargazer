@@ -3,7 +3,7 @@ import type { StarPoint } from "./github"
 export type CurveType = "smooth" | "linear" | "step"
 export type GridStyle = "full" | "horizontal" | "none"
 export type AreaFill = "gradient" | "solid"
-export type FontFamily = "sans" | "mono" | "serif"
+export type FontFamily = "sans" | "mono" | "serif" | "geometric" | "display" | "grotesque"
 
 /** Individually-selectable visual properties (everything except font + spacing). */
 export interface ChartStyle {
@@ -26,6 +26,9 @@ export const FONT_STACKS: Record<FontFamily, string> = {
   sans: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
   mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
   serif: "ui-serif, Georgia, Cambria, Times New Roman, serif",
+  geometric: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+  display: "'Fraunces', ui-serif, Georgia, serif",
+  grotesque: "'Archivo', ui-sans-serif, system-ui, sans-serif",
 }
 
 export interface ChartPad {
@@ -43,10 +46,11 @@ export interface SpacingConfig {
   labelSize: number
 }
 
-export type SpacingName = "compact" | "comfortable" | "spacious"
+export type SpacingName = "compact" | "cozy" | "comfortable" | "spacious"
 
 export const SPACING_CONFIGS: Record<SpacingName, SpacingConfig> = {
   compact: { pad: { top: 52, right: 28, bottom: 44, left: 56 }, titleSize: 18, badgeSize: 16, labelSize: 11 },
+  cozy: { pad: { top: 62, right: 32, bottom: 50, left: 64 }, titleSize: 20, badgeSize: 18, labelSize: 12 },
   comfortable: { pad: { top: 72, right: 36, bottom: 56, left: 72 }, titleSize: 22, badgeSize: 20, labelSize: 13 },
   spacious: { pad: { top: 96, right: 52, bottom: 76, left: 96 }, titleSize: 26, badgeSize: 22, labelSize: 15 },
 }
@@ -65,6 +69,9 @@ export const STYLE_PRESETS: NamedStyle[] = [
   { name: "Editorial", font: "serif", spacing: "spacious" },
   { name: "Magazine", font: "serif", spacing: "comfortable" },
   { name: "Terminal", font: "mono", spacing: "compact" },
+  { name: "Geometric", font: "geometric", spacing: "comfortable" },
+  { name: "Display", font: "display", spacing: "spacious" },
+  { name: "Grotesque", font: "grotesque", spacing: "cozy" },
 ]
 
 export interface ChartOptions extends ChartStyle {
