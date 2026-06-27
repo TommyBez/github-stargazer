@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { ColorPicker } from "@/components/color-picker"
 import { buildChartSvg, THEME_PRESETS, type ThemeName } from "@/lib/chart-svg"
 import type { RepoStarData } from "@/lib/github"
 
@@ -261,21 +262,7 @@ export function StarsChartApp() {
                     />
                   ))}
                 </ToggleGroup>
-                <label className="relative size-7 cursor-pointer overflow-hidden rounded-full border border-border">
-                  <span
-                    className="block size-full"
-                    style={{
-                      background: "conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
-                    }}
-                  />
-                  <input
-                    type="color"
-                    value={lineColor}
-                    onChange={(e) => setLineColor(e.target.value)}
-                    className="absolute inset-0 cursor-pointer opacity-0"
-                    aria-label="Custom color"
-                  />
-                </label>
+                <ColorPicker value={lineColor} onChange={setLineColor} aria-label="Custom line color" />
               </div>
             </div>
 
