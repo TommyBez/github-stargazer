@@ -1,6 +1,13 @@
 import { ImageResponse } from "next/og"
 import { getStarHistory, parseRepo } from "@/lib/github"
-import { computeChartGeometry, formatNumber, THEME_PRESETS, type ThemeName } from "@/lib/chart-svg"
+import {
+  computeChartGeometry,
+  formatNumber,
+  THEME_PRESETS,
+  SPACING_CONFIGS,
+  type ThemeName,
+  type SpacingName,
+} from "@/lib/chart-svg"
 
 export const runtime = "nodejs"
 
@@ -105,6 +112,8 @@ export async function GET(request: Request) {
   const area = (searchParams.get("area") as "gradient" | "solid" | "none") ?? "gradient"
   const glow = searchParams.get("glow") === "1"
   const fontKey = (searchParams.get("font") as "sans" | "mono" | "serif") ?? "sans"
+  const spacingKey = (searchParams.get("spacing") as SpacingName) ?? "comfortable"
+  const spacingCfg = SPACING_CONFIGS[spacingKey] ?? SPACING_CONFIGS.comfortable
 
   const parsed = parseRepo(repoParam)
   const preset = THEME_PRESETS[theme] ?? THEME_PRESETS.dark
@@ -129,7 +138,7 @@ export async function GET(request: Request) {
   try {
     if (!parsed) throw new Error("invalid repo")
     const data = await getStarHistory(parsed.owner, parsed.name)
-    const geo = computeChartGeometry(data.history, OG_W, OG_H, curve)
+    const geo = computeChartGeometry(data.history, OG_W, OG_H, curve, spacingCfg.pad)
     const heading = title ?? data.fullName
 
     const shapesSvg = buildShapesSvg(geo, {
@@ -159,7 +168,16 @@ export async function GET(request: Request) {
         <img src={dataUri} width={OG_W} height={OG_H} alt="" style={{ position: "absolute", top: 0, left: 0 }} />
 
         {/* Title */}
-        <div style={{ position: "absolute", top: 22, left: 72, display: "flex", fontSize: 26, fontWeight: 700 }}>
+        <div
+          style={{
+            position: "absolute",
+            top: Math.round(spacingCfg.pad.top / 2 - spacingCfg.titleSize / 2),
+            left: spacingCfg.pad.left,
+            display: "flex",
+            fontSize: spacingCfg.titleSize,
+            fontWeight: 700,
+          }}
+        >
           {heading}
         </div>
 
@@ -167,17 +185,17 @@ export async function GET(request: Request) {
         <div
           style={{
             position: "absolute",
-            top: 22,
-            right: 36,
+            top: Math.round(spacingCfg.pad.top / 2 - spacingCfg.badgeSize / 2),
+            right: spacingCfg.pad.right,
             display: "flex",
             alignItems: "center",
             gap: 8,
-            fontSize: 22,
+            fontSize: spacingCfg.badgeSize,
             fontWeight: 700,
             color: lineColor,
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill={lineColor}>
+          <svg width={spacingCfg.badgeSize} height={spacingCfg.badgeSize} viewBox="0 0 24 24" fill={lineColor}>
             <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9.9l6.9-.8z" />
           </svg>
           <div style={{ display: "flex" }}>{formatNumber(geo.lastStars)}</div>
@@ -189,12 +207,12 @@ export async function GET(request: Request) {
             key={`y-${i}`}
             style={{
               position: "absolute",
-              top: l.y - 11,
+              top: l.y - Math.round(spacingCfg.labelSize * 0.7),
               left: 0,
               width: geo.plotLeft - 16,
               display: "flex",
               justifyContent: "flex-end",
-              fontSize: 15,
+              fontSize: spacingCfg.labelSize,
               opacity: 0.7,
             }}
           >
@@ -213,7 +231,7 @@ export async function GET(request: Request) {
               width: 140,
               display: "flex",
               justifyContent: "center",
-              fontSize: 15,
+              fontSize: spacingCfg.labelSize,
               opacity: 0.7,
             }}
           >

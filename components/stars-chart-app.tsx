@@ -8,9 +8,21 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ColorPicker } from "@/components/color-picker"
-import { buildChartSvg, THEME_PRESETS, type ThemeName, type ChartStyle } from "@/lib/chart-svg"
+import {
+  buildChartSvg,
+  THEME_PRESETS,
+  STYLE_PRESETS,
+  SPACING_CONFIGS,
+  DEFAULT_STYLE,
+  type ThemeName,
+  type ChartStyle,
+  type CurveType,
+  type GridStyle,
+  type AreaFill,
+} from "@/lib/chart-svg"
 import type { RepoStarData } from "@/lib/github"
 
 const PREVIEW_W = 1000
@@ -31,57 +43,21 @@ const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
   { value: "midnight", label: "Midnight" },
 ]
 
-interface StylePreset {
-  name: string
-  theme: ThemeName
-  lineColor: string
-  showArea: boolean
-  style: ChartStyle
-}
+const CURVE_OPTIONS: { value: CurveType; label: string }[] = [
+  { value: "linear", label: "Linear" },
+  { value: "smooth", label: "Smooth" },
+  { value: "step", label: "Step" },
+]
 
-const STYLE_PRESETS: StylePreset[] = [
-  {
-    name: "Classic",
-    theme: "dark",
-    lineColor: "#facc15",
-    showArea: true,
-    style: { curve: "linear", lineWidth: 2.5, grid: "horizontal", areaFill: "gradient", glow: false, font: "sans" },
-  },
-  {
-    name: "Neon",
-    theme: "midnight",
-    lineColor: "#38bdf8",
-    showArea: true,
-    style: { curve: "smooth", lineWidth: 3, grid: "horizontal", areaFill: "gradient", glow: true, font: "sans" },
-  },
-  {
-    name: "Minimal",
-    theme: "light",
-    lineColor: "#94a3b8",
-    showArea: false,
-    style: { curve: "linear", lineWidth: 1.5, grid: "none", areaFill: "gradient", glow: false, font: "sans" },
-  },
-  {
-    name: "Terminal",
-    theme: "dark",
-    lineColor: "#10b981",
-    showArea: false,
-    style: { curve: "step", lineWidth: 2, grid: "horizontal", areaFill: "solid", glow: false, font: "mono" },
-  },
-  {
-    name: "Editorial",
-    theme: "light",
-    lineColor: "#1f2937",
-    showArea: true,
-    style: { curve: "smooth", lineWidth: 1.75, grid: "horizontal", areaFill: "solid", glow: false, font: "serif" },
-  },
-  {
-    name: "Sunset",
-    theme: "dark",
-    lineColor: "#fb923c",
-    showArea: true,
-    style: { curve: "smooth", lineWidth: 3.5, grid: "none", areaFill: "gradient", glow: true, font: "sans" },
-  },
+const GRID_OPTIONS: { value: GridStyle; label: string }[] = [
+  { value: "horizontal", label: "Horizontal" },
+  { value: "full", label: "Full" },
+  { value: "none", label: "None" },
+]
+
+const AREA_OPTIONS: { value: AreaFill; label: string }[] = [
+  { value: "gradient", label: "Gradient" },
+  { value: "solid", label: "Solid" },
 ]
 
 export function StarsChartApp() {
@@ -96,37 +72,27 @@ export function StarsChartApp() {
   const [theme, setTheme] = useState<ThemeName>("dark")
   const [lineColor, setLineColor] = useState(LINE_COLORS[0].value)
   const [showArea, setShowArea] = useState(true)
-  const [style, setStyle] = useState<ChartStyle>(STYLE_PRESETS[0].style)
+  // Font + spacing are driven together by the Style menu.
+  const [styleName, setStyleName] = useState(STYLE_PRESETS[0].name)
+  // Everything else is individually selectable.
+  const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
 
   const [copied, setCopied] = useState(false)
+
+  const namedStyle = useMemo(
+    () => STYLE_PRESETS.find((p) => p.name === styleName) ?? STYLE_PRESETS[0],
+    [styleName],
+  )
+  const spacing = SPACING_CONFIGS[namedStyle.spacing]
+  const font = namedStyle.font
 
   const resolvedTitle = useMemo(() => {
     if (title.trim()) return title.trim()
     return data ? data.fullName : "Star History"
   }, [title, data])
 
-  const activePreset = useMemo(
-    () =>
-      STYLE_PRESETS.find(
-        (p) =>
-          p.theme === theme &&
-          p.lineColor === lineColor &&
-          p.showArea === showArea &&
-          p.style.curve === style.curve &&
-          p.style.lineWidth === style.lineWidth &&
-          p.style.grid === style.grid &&
-          p.style.areaFill === style.areaFill &&
-          p.style.glow === style.glow &&
-          p.style.font === style.font,
-      )?.name,
-    [theme, lineColor, showArea, style],
-  )
-
-  function applyPreset(preset: StylePreset) {
-    setTheme(preset.theme)
-    setLineColor(preset.lineColor)
-    setShowArea(preset.showArea)
-    setStyle(preset.style)
+  function updateStyle(patch: Partial<ChartStyle>) {
+    setStyle((s) => ({ ...s, ...patch }))
   }
 
   const svg = useMemo(() => {
@@ -138,10 +104,12 @@ export function StarsChartApp() {
       showArea,
       width: PREVIEW_W,
       height: PREVIEW_H,
+      font,
+      spacing,
       ...THEME_PRESETS[theme],
       ...style,
     })
-  }, [data, resolvedTitle, lineColor, showArea, theme, style])
+  }, [data, resolvedTitle, lineColor, showArea, theme, style, font, spacing])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
@@ -215,11 +183,12 @@ export function StarsChartApp() {
       grid: style.grid,
       area: showArea ? style.areaFill : "none",
       glow: style.glow ? "1" : "0",
-      font: style.font,
+      font,
+      spacing: namedStyle.spacing,
     })
     if (title.trim()) params.set("title", title.trim())
     return `/api/og?${params.toString()}`
-  }, [activeRepo, theme, lineColor, title, style, showArea])
+  }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
   async function handleCopyOg() {
     if (!ogUrl) return
@@ -303,28 +272,22 @@ export function StarsChartApp() {
             <h2 className="text-sm font-semibold">Customize</h2>
 
             <div className="flex flex-col gap-2">
-              <Label>Style presets</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {STYLE_PRESETS.map((preset) => {
-                  const isActive = activePreset === preset.name
-                  return (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() => applyPreset(preset)}
-                      aria-pressed={isActive}
-                      className={`flex flex-col items-center gap-1.5 rounded-lg border p-2 text-xs transition-colors hover:bg-accent ${
-                        isActive ? "border-foreground bg-accent" : "border-border"
-                      }`}
-                    >
-                      <PresetPreview preset={preset} />
-                      <span className={isActive ? "font-medium text-foreground" : "text-muted-foreground"}>
-                        {preset.name}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+              <Label htmlFor="chart-style">Style</Label>
+              <Select value={styleName} onValueChange={setStyleName}>
+                <SelectTrigger id="chart-style">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STYLE_PRESETS.map((p) => (
+                    <SelectItem key={p.name} value={p.name}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground capitalize">
+                {font} font · {namedStyle.spacing} spacing
+              </p>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -384,9 +347,79 @@ export function StarsChartApp() {
               </div>
             </div>
 
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-curve">Curve</Label>
+              <Select value={style.curve} onValueChange={(v) => updateStyle({ curve: v as CurveType })}>
+                <SelectTrigger id="chart-curve">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURVE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="chart-lw">Line width</Label>
+                <span className="text-xs text-muted-foreground">{style.lineWidth.toFixed(1)}px</span>
+              </div>
+              <Slider
+                id="chart-lw"
+                min={1}
+                max={5}
+                step={0.5}
+                value={[style.lineWidth]}
+                onValueChange={(v) => updateStyle({ lineWidth: v[0] })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="chart-grid">Grid</Label>
+              <Select value={style.grid} onValueChange={(v) => updateStyle({ grid: v as GridStyle })}>
+                <SelectTrigger id="chart-grid">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRID_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between">
               <Label htmlFor="area-toggle">Show area fill</Label>
               <Switch id="area-toggle" checked={showArea} onCheckedChange={setShowArea} />
+            </div>
+
+            {showArea && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="chart-area">Area style</Label>
+                <Select value={style.areaFill} onValueChange={(v) => updateStyle({ areaFill: v as AreaFill })}>
+                  <SelectTrigger id="chart-area">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AREA_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="glow-toggle">Glow effect</Label>
+              <Switch id="glow-toggle" checked={style.glow} onCheckedChange={(v) => updateStyle({ glow: v })} />
             </div>
 
             {/* OG share */}
@@ -412,75 +445,6 @@ export function StarsChartApp() {
         </div>
       )}
     </div>
-  )
-}
-
-function PresetPreview({ preset }: { preset: StylePreset }) {
-  const W = 100
-  const H = 44
-  const padX = 6
-  const top = 6
-  const bottom = 38
-  // Representative ascending sample series (value: 0 = low, 1 = high).
-  const sample = [0.15, 0.28, 0.4, 0.62, 0.9]
-  const pts = sample.map((v, i) => ({
-    x: padX + (i / (sample.length - 1)) * (W - padX * 2),
-    y: bottom - v * (bottom - top),
-  }))
-
-  let line = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`
-  if (preset.style.curve === "step") {
-    for (let i = 1; i < pts.length; i++) {
-      line += ` L${pts[i].x.toFixed(1)},${pts[i - 1].y.toFixed(1)} L${pts[i].x.toFixed(1)},${pts[i].y.toFixed(1)}`
-    }
-  } else if (preset.style.curve === "smooth") {
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] ?? pts[i]
-      const p1 = pts[i]
-      const p2 = pts[i + 1]
-      const p3 = pts[i + 2] ?? p2
-      const cp1x = p1.x + (p2.x - p0.x) / 6
-      const cp1y = p1.y + (p2.y - p0.y) / 6
-      const cp2x = p2.x - (p3.x - p1.x) / 6
-      const cp2y = p2.y - (p3.y - p1.y) / 6
-      line += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`
-    }
-  } else {
-    for (let i = 1; i < pts.length; i++) line += ` L${pts[i].x.toFixed(1)},${pts[i].y.toFixed(1)}`
-  }
-
-  const area = `${line} L${pts[pts.length - 1].x.toFixed(1)},${bottom} L${pts[0].x.toFixed(1)},${bottom} Z`
-  const bg = THEME_PRESETS[preset.theme].bgColor
-
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="h-9 w-full rounded-sm"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <rect width={W} height={H} fill={bg} />
-      {preset.showArea && <path d={area} fill={preset.lineColor} fillOpacity={preset.style.areaFill === "solid" ? 0.18 : 0.28} />}
-      {preset.style.glow && (
-        <path
-          d={line}
-          fill="none"
-          stroke={preset.lineColor}
-          strokeWidth={preset.style.lineWidth * 1.6}
-          strokeOpacity={0.4}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      )}
-      <path
-        d={line}
-        fill="none"
-        stroke={preset.lineColor}
-        strokeWidth={preset.style.lineWidth}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </svg>
   )
 }
 

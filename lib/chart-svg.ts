@@ -5,14 +5,13 @@ export type GridStyle = "full" | "horizontal" | "none"
 export type AreaFill = "gradient" | "solid"
 export type FontFamily = "sans" | "mono" | "serif"
 
-/** Visual style dimensions, independent of theme/color, that define a "look". */
+/** Individually-selectable visual properties (everything except font + spacing). */
 export interface ChartStyle {
   curve: CurveType
   lineWidth: number
   grid: GridStyle
   areaFill: AreaFill
   glow: boolean
-  font: FontFamily
 }
 
 export const DEFAULT_STYLE: ChartStyle = {
@@ -21,7 +20,6 @@ export const DEFAULT_STYLE: ChartStyle = {
   grid: "horizontal",
   areaFill: "gradient",
   glow: false,
-  font: "sans",
 }
 
 export const FONT_STACKS: Record<FontFamily, string> = {
@@ -29,6 +27,45 @@ export const FONT_STACKS: Record<FontFamily, string> = {
   mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
   serif: "ui-serif, Georgia, Cambria, Times New Roman, serif",
 }
+
+export interface ChartPad {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
+
+/** A spacing/density profile: plot padding plus type sizes. */
+export interface SpacingConfig {
+  pad: ChartPad
+  titleSize: number
+  badgeSize: number
+  labelSize: number
+}
+
+export type SpacingName = "compact" | "comfortable" | "spacious"
+
+export const SPACING_CONFIGS: Record<SpacingName, SpacingConfig> = {
+  compact: { pad: { top: 52, right: 28, bottom: 44, left: 56 }, titleSize: 18, badgeSize: 16, labelSize: 11 },
+  comfortable: { pad: { top: 72, right: 36, bottom: 56, left: 72 }, titleSize: 22, badgeSize: 20, labelSize: 13 },
+  spacious: { pad: { top: 96, right: 52, bottom: 76, left: 96 }, titleSize: 26, badgeSize: 22, labelSize: 15 },
+}
+
+/** Predefined font + spacing combinations selectable from the Style menu. */
+export interface NamedStyle {
+  name: string
+  font: FontFamily
+  spacing: SpacingName
+}
+
+export const STYLE_PRESETS: NamedStyle[] = [
+  { name: "Modern", font: "sans", spacing: "comfortable" },
+  { name: "Compact", font: "sans", spacing: "compact" },
+  { name: "Airy", font: "sans", spacing: "spacious" },
+  { name: "Editorial", font: "serif", spacing: "spacious" },
+  { name: "Magazine", font: "serif", spacing: "comfortable" },
+  { name: "Terminal", font: "mono", spacing: "compact" },
+]
 
 export interface ChartOptions extends ChartStyle {
   title: string
@@ -40,6 +77,8 @@ export interface ChartOptions extends ChartStyle {
   showArea: boolean
   width: number
   height: number
+  font: FontFamily
+  spacing: SpacingConfig
 }
 
 export const THEME_PRESETS = {
@@ -49,10 +88,6 @@ export const THEME_PRESETS = {
 } as const
 
 export type ThemeName = keyof typeof THEME_PRESETS
-
-const PAD = { top: 72, right: 36, bottom: 56, left: 72 }
-
-export const CHART_PAD = PAD
 
 export interface ChartGeometry {
   width: number
@@ -118,10 +153,11 @@ export function computeChartGeometry(
   width: number,
   height: number,
   curve: CurveType = "linear",
+  pad: ChartPad = SPACING_CONFIGS.comfortable.pad,
 ): ChartGeometry {
-  const plotW = width - PAD.left - PAD.right
-  const plotH = height - PAD.top - PAD.bottom
-  const plotBottom = PAD.top + plotH
+  const plotW = width - pad.left - pad.right
+  const plotH = height - pad.top - pad.bottom
+  const plotBottom = pad.top + plotH
 
   const xs = points.map((p) => new Date(p.date).getTime())
   const minX = points.length ? Math.min(...xs) : 0
@@ -129,8 +165,8 @@ export function computeChartGeometry(
   const maxY = points.length ? Math.max(...points.map((p) => p.stars)) : 1
   const rangeX = maxX - minX || 1
 
-  const sx = (t: number) => PAD.left + ((t - minX) / rangeX) * plotW
-  const sy = (v: number) => PAD.top + plotH - (v / maxY) * plotH
+  const sx = (t: number) => pad.left + ((t - minX) / rangeX) * plotW
+  const sy = (v: number) => pad.top + plotH - (v / maxY) * plotH
 
   const coords = points.map((p) => ({ x: sx(new Date(p.date).getTime()), y: sy(p.stars) }))
 
@@ -159,9 +195,9 @@ export function computeChartGeometry(
   return {
     width,
     height,
-    plotLeft: PAD.left,
-    plotRight: PAD.left + plotW,
-    plotTop: PAD.top,
+    plotLeft: pad.left,
+    plotRight: pad.left + plotW,
+    plotTop: pad.top,
     plotBottom,
     linePath,
     areaPath,
@@ -211,12 +247,15 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     areaFill,
     glow,
     font,
+    spacing,
   } = options
 
   const fontStack = FONT_STACKS[font]
-  const plotW = width - PAD.left - PAD.right
-  const plotH = height - PAD.top - PAD.bottom
-  const plotBottom = PAD.top + plotH
+  const { pad, titleSize, badgeSize, labelSize } = spacing
+  const titleBaseline = Math.round(pad.top * 0.55)
+  const plotW = width - pad.left - pad.right
+  const plotH = height - pad.top - pad.bottom
+  const plotBottom = pad.top + plotH
 
   if (points.length === 0) {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${bgColor}"/><text x="${width / 2}" y="${height / 2}" fill="${textColor}" font-family="${fontStack}" font-size="20" text-anchor="middle">No star data</text></svg>`
@@ -228,8 +267,8 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
   const maxY = Math.max(...points.map((p) => p.stars))
   const rangeX = maxX - minX || 1
 
-  const sx = (t: number) => PAD.left + ((t - minX) / rangeX) * plotW
-  const sy = (v: number) => PAD.top + plotH - (v / maxY) * plotH
+  const sx = (t: number) => pad.left + ((t - minX) / rangeX) * plotW
+  const sy = (v: number) => pad.top + plotH - (v / maxY) * plotH
 
   const coords = points.map((p) => ({
     x: sx(new Date(p.date).getTime()),
@@ -249,9 +288,9 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     const value = (maxY / yTicks) * i
     const y = sy(value)
     if (grid !== "none") {
-      gridLines += `<line x1="${PAD.left}" y1="${y.toFixed(2)}" x2="${(PAD.left + plotW).toFixed(2)}" y2="${y.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`
+      gridLines += `<line x1="${pad.left}" y1="${y.toFixed(2)}" x2="${(pad.left + plotW).toFixed(2)}" y2="${y.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`
     }
-    yLabels += `<text x="${PAD.left - 12}" y="${(y + 4).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="13" text-anchor="end" opacity="0.7">${formatNumber(Math.round(value))}</text>`
+    yLabels += `<text x="${pad.left - 12}" y="${(y + 4).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="${labelSize}" text-anchor="end" opacity="0.7">${formatNumber(Math.round(value))}</text>`
   }
 
   // X axis labels (start, middle, end) + optional vertical grid lines
@@ -260,9 +299,9 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
   for (const idx of xTickIdx) {
     const c = coords[idx]
     if (grid === "full") {
-      gridLines += `<line x1="${c.x.toFixed(2)}" y1="${PAD.top}" x2="${c.x.toFixed(2)}" y2="${plotBottom.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`
+      gridLines += `<line x1="${c.x.toFixed(2)}" y1="${pad.top}" x2="${c.x.toFixed(2)}" y2="${plotBottom.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`
     }
-    xLabels += `<text x="${c.x.toFixed(2)}" y="${(plotBottom + 28).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="13" text-anchor="middle" opacity="0.7">${escapeXml(formatDate(points[idx].date))}</text>`
+    xLabels += `<text x="${c.x.toFixed(2)}" y="${(plotBottom + Math.round(labelSize * 1.6)).toFixed(2)}" fill="${textColor}" font-family="${fontStack}" font-size="${labelSize}" text-anchor="middle" opacity="0.7">${escapeXml(formatDate(points[idx].date))}</text>`
   }
 
   const lastStars = points[points.length - 1].stars
@@ -291,8 +330,8 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
     </filter>
   </defs>
   <rect width="${width}" height="${height}" fill="${bgColor}"/>
-  <text x="${PAD.left}" y="38" fill="${textColor}" font-family="${fontStack}" font-size="22" font-weight="700">${escapeXml(title)}</text>
-  <text x="${(width - PAD.right).toFixed(2)}" y="38" fill="${lineColor}" font-family="${fontStack}" font-size="20" font-weight="700" text-anchor="end">★ ${formatNumber(lastStars)}</text>
+  <text x="${pad.left}" y="${titleBaseline}" fill="${textColor}" font-family="${fontStack}" font-size="${titleSize}" font-weight="700">${escapeXml(title)}</text>
+  <text x="${(width - pad.right).toFixed(2)}" y="${titleBaseline}" fill="${lineColor}" font-family="${fontStack}" font-size="${badgeSize}" font-weight="700" text-anchor="end">★ ${formatNumber(lastStars)}</text>
   ${gridLines}
   ${areaMarkup}
   ${lineMarkup}
