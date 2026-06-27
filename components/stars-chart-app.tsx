@@ -247,9 +247,11 @@ export function StarsChartApp() {
               <Label>Line color</Label>
               <div className="flex flex-wrap items-center gap-2">
                 <ToggleGroup
-                  type="single"
-                  value={lineColor}
-                  onValueChange={(v) => v && setLineColor(v)}
+                  value={[lineColor]}
+                  onValueChange={(groupValue) => {
+                    const next = groupValue[0]
+                    if (next) setLineColor(next)
+                  }}
                   className="flex flex-wrap gap-2"
                 >
                   {LINE_COLORS.map((c) => (
@@ -257,7 +259,7 @@ export function StarsChartApp() {
                       key={c.value}
                       value={c.value}
                       aria-label={c.name}
-                      className="size-7 rounded-full border-2 border-transparent p-0 transition-transform hover:scale-110 data-[state=on]:border-foreground data-[state=on]:bg-transparent"
+                      className="size-7 rounded-full border-2 border-transparent p-0 transition-transform hover:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
                       style={{ backgroundColor: c.value }}
                     />
                   ))}

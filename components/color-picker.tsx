@@ -24,6 +24,7 @@ function clamp(n: number, min: number, max: number) {
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  if (typeof hex !== "string") return null
   const m = hex.replace("#", "")
   const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m
   if (!/^[0-9a-fA-F]{6}$/.test(full)) return null
