@@ -266,6 +266,7 @@ export async function GET(request: Request) {
       { width: OG_W, height: OG_H, fonts: fonts.length ? fonts : undefined },
     )
   } catch (err) {
+    const isNoRepo = !parsed
     if (err instanceof Error && err.message && err.message !== "invalid repo") {
       fallbackMessage = err.message
     }
@@ -274,20 +275,27 @@ export async function GET(request: Request) {
         style={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "center",
           width: "100%",
           height: "100%",
           background: preset.bgColor,
           color: preset.textColor,
           fontFamily: fontName,
-          fontSize: 48,
-          fontWeight: 700,
+          padding: 80,
         }}
       >
-        <div style={{ display: "flex" }}>Star History</div>
-        <div style={{ display: "flex", fontSize: 24, opacity: 0.7, marginTop: 12, maxWidth: 900, textAlign: "center" }}>
-          {fallbackMessage}
+        {/* Star icon */}
+        <svg width={64} height={64} viewBox="0 0 24 24" fill={lineColor} style={{ marginBottom: 32 }}>
+          <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9.9l6.9-.8z" />
+        </svg>
+        <div style={{ display: "flex", fontSize: 72, fontWeight: 800, lineHeight: 1.05 }}>
+          {isNoRepo ? "Star Charts" : "Star History"}
+        </div>
+        <div style={{ display: "flex", fontSize: 28, opacity: 0.7, marginTop: 16, maxWidth: 900 }}>
+          {isNoRepo
+            ? "Generate and share star history charts for any GitHub repository."
+            : fallbackMessage}
         </div>
       </div>,
       { width: OG_W, height: OG_H, fonts: fonts.length ? fonts : undefined },
