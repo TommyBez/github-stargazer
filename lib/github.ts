@@ -28,12 +28,22 @@ export class GitHubError extends Error {
   }
 }
 
+/** Resolve a GitHub token from the supported env vars, ignoring blank values. */
+function getToken(): string | undefined {
+  const candidates = [process.env.GITHUB_TOKEN_2, process.env.GITHUB_TOKEN]
+  for (const c of candidates) {
+    const v = c?.trim()
+    if (v) return v
+  }
+  return undefined
+}
+
 function headers(useToken: boolean) {
   const h: Record<string, string> = {
     Accept: "application/vnd.github.v3.star+json",
     "User-Agent": "stars-chart-app",
   }
-  const token = process.env.GITHUB_TOKEN
+  const token = getToken()
   if (useToken && token) h.Authorization = `Bearer ${token}`
   return h
 }
@@ -59,7 +69,7 @@ export function parseRepo(input: string): { owner: string; name: string } | null
 }
 
 async function ghFetch(url: string) {
-  const hasToken = Boolean(process.env.GITHUB_TOKEN)
+  const hasToken = Boolean(getToken())
   let res = await fetch(url, { headers: headers(hasToken) })
 
   // A configured token that returns 401 is invalid/expired. Retry
