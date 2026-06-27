@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     if (!parsed) throw new Error("invalid repo")
     const data = await getStarHistory(parsed.owner, parsed.name)
     const geo = computeChartGeometry(data.history, OG_W, OG_H)
-    const heading = title ?? `${data.fullName} — Stars`
+    const heading = title ?? data.fullName
 
     const shapesSvg = buildShapesSvg(geo, {
       bgColor: preset.bgColor,
