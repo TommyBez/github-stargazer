@@ -150,11 +150,19 @@ export function ColorPicker({ value, onChange, className, "aria-label": ariaLabe
       <PopoverTrigger
         aria-label={ariaLabel ?? "Open color picker"}
         className={cn(
-          "size-7 rounded-full border border-border shadow-sm outline-none ring-offset-background transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "relative size-7 overflow-hidden rounded-full border border-border shadow-sm outline-none ring-offset-background transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           className,
         )}
-        style={{ backgroundColor: value }}
-      />
+        style={{
+          background: "conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
+        }}
+      >
+        {/* Inner dot reflects the currently selected color */}
+        <span
+          className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/70 shadow-sm"
+          style={{ backgroundColor: value }}
+        />
+      </PopoverTrigger>
       <PopoverContent className="w-64 space-y-3" align="start">
         {/* Saturation / Value area */}
         <div
