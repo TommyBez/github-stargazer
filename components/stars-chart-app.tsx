@@ -102,6 +102,13 @@ export function StarsChartApp() {
     return "Star history"
   }, [title, data])
 
+  const namedStyle = useMemo(() => {
+    return STYLE_PRESETS.find((s) => s.name === styleName) || STYLE_PRESETS[0]
+  }, [styleName])
+
+  const font = namedStyle.font
+  const spacing = namedStyle.spacing
+
   const svg = useMemo(() => {
     if (!data) return ""
     return buildChartSvg(data.history, {
