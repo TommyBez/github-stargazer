@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { buildChartSvg, THEME_PRESETS, type ThemeName } from "@/lib/chart-svg"
 import type { RepoStarData } from "@/lib/github"
 
@@ -243,25 +245,27 @@ export function StarsChartApp() {
             <div className="flex flex-col gap-2">
               <Label>Line color</Label>
               <div className="flex flex-wrap items-center gap-2">
-                {LINE_COLORS.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setLineColor(c.value)}
-                    aria-label={c.name}
-                    aria-pressed={lineColor === c.value}
-                    className={`size-7 rounded-full border-2 transition-transform hover:scale-110 ${
-                      lineColor === c.value ? "border-foreground" : "border-transparent"
-                    }`}
-                    style={{ backgroundColor: c.value }}
-                  />
-                ))}
+                <ToggleGroup
+                  type="single"
+                  value={lineColor}
+                  onValueChange={(v) => v && setLineColor(v)}
+                  className="flex flex-wrap gap-2"
+                >
+                  {LINE_COLORS.map((c) => (
+                    <ToggleGroupItem
+                      key={c.value}
+                      value={c.value}
+                      aria-label={c.name}
+                      className="size-7 rounded-full border-2 border-transparent p-0 transition-transform hover:scale-110 data-[state=on]:border-foreground data-[state=on]:bg-transparent"
+                      style={{ backgroundColor: c.value }}
+                    />
+                  ))}
+                </ToggleGroup>
                 <label className="relative size-7 cursor-pointer overflow-hidden rounded-full border border-border">
                   <span
                     className="block size-full"
                     style={{
-                      background:
-                        "conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
+                      background: "conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
                     }}
                   />
                   <input
@@ -277,22 +281,7 @@ export function StarsChartApp() {
 
             <div className="flex items-center justify-between">
               <Label htmlFor="area-toggle">Show area fill</Label>
-              <button
-                id="area-toggle"
-                type="button"
-                role="switch"
-                aria-checked={showArea}
-                onClick={() => setShowArea((s) => !s)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${
-                  showArea ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 size-5 rounded-full bg-background transition-transform ${
-                    showArea ? "translate-x-[22px]" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
+              <Switch id="area-toggle" checked={showArea} onCheckedChange={setShowArea} />
             </div>
 
             {/* OG share */}
