@@ -211,7 +211,7 @@ export function StarsChartApp() {
             value={repoInput}
             onChange={(e) => setRepoInput(e.target.value)}
             placeholder="owner/repo  or  https://github.com/owner/repo"
-            className="h-11 pl-9"
+            className="h-11 pl-9 font-mono text-sm"
             aria-label="GitHub repository"
           />
         </div>
@@ -254,7 +254,7 @@ export function StarsChartApp() {
                 role="img"
               />
             </Card>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button onClick={handleDownloadPng} variant="default">
                 <ImageDown className="size-4" />
                 Download PNG
@@ -263,16 +263,22 @@ export function StarsChartApp() {
                 <FileDown className="size-4" />
                 Download SVG
               </Button>
-              <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Star className="size-4 fill-current text-[#facc15]" />
-                {data.totalStars.toLocaleString()} stars
+              <div className="ml-auto flex items-center gap-1.5 font-mono text-sm text-foreground">
+                <Star className="size-4 fill-star text-star" />
+                <span className="tabular-nums">{data.totalStars.toLocaleString()}</span>
+                <span className="text-muted-foreground">stars</span>
               </div>
             </div>
           </div>
 
           {/* Customization panel */}
-          <Card className="flex h-fit flex-col gap-5 p-5">
-            <h2 className="text-sm font-semibold">Customize</h2>
+          <Card className="flex h-fit flex-col gap-5 p-5 lg:sticky lg:top-6">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h2 className="font-heading text-sm font-semibold tracking-tight">Customize</h2>
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+                Controls
+              </span>
+            </div>
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="chart-style">Style</Label>
@@ -452,25 +458,32 @@ export function StarsChartApp() {
 function EmptyState({ onPick }: { onPick: (repo: string) => void }) {
   const examples = ["vercel/next.js", "facebook/react", "shadcn-ui/ui", "tailwindlabs/tailwindcss"]
   return (
-    <Card className="flex flex-col items-center gap-5 border-dashed px-6 py-14 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-        <Star className="size-7 text-[#facc15]" />
+    <Card className="flex flex-col gap-6 p-6 sm:p-8">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md bg-star-soft">
+          <Star className="size-4 fill-star text-star" />
+        </span>
+        <div className="flex flex-col gap-1">
+          <p className="font-heading text-base font-semibold tracking-tight">
+            Visualize any repository&apos;s star history
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Paste a GitHub URL above, or start from one of these:
+          </p>
+        </div>
       </div>
-      <div className="flex flex-col gap-1">
-        <p className="text-base font-medium">Visualize any repository&apos;s star history</p>
-        <p className="text-sm text-muted-foreground">
-          Paste a GitHub URL above, or try one of these:
-        </p>
-      </div>
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex flex-col gap-px overflow-hidden rounded-md border border-border">
         {examples.map((ex) => (
           <button
             key={ex}
             type="button"
             onClick={() => onPick(ex)}
-            className="rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="group flex items-center justify-between bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
           >
-            {ex}
+            <span className="font-mono text-sm text-foreground">{ex}</span>
+            <span className="font-mono text-xs text-muted-foreground group-hover:text-foreground">
+              Plot →
+            </span>
           </button>
         ))}
       </div>
