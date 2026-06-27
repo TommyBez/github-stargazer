@@ -31,6 +31,22 @@ const THEME_OPTIONS: { value: ThemeName; label: string }[] = [
   { value: "midnight", label: "Midnight" },
 ]
 
+interface StylePreset {
+  name: string
+  theme: ThemeName
+  lineColor: string
+  showArea: boolean
+}
+
+const STYLE_PRESETS: StylePreset[] = [
+  { name: "Classic", theme: "dark", lineColor: "#facc15", showArea: true },
+  { name: "Neon", theme: "midnight", lineColor: "#38bdf8", showArea: true },
+  { name: "Minimal", theme: "light", lineColor: "#94a3b8", showArea: false },
+  { name: "Sunset", theme: "dark", lineColor: "#fb923c", showArea: true },
+  { name: "Forest", theme: "light", lineColor: "#10b981", showArea: true },
+  { name: "Blush", theme: "midnight", lineColor: "#fb7185", showArea: false },
+]
+
 export function StarsChartApp() {
   const [repoInput, setRepoInput] = useState("")
   const [activeRepo, setActiveRepo] = useState("")
@@ -50,6 +66,17 @@ export function StarsChartApp() {
     if (title.trim()) return title.trim()
     return data ? data.fullName : "Star History"
   }, [title, data])
+
+  const activePreset = useMemo(
+    () => STYLE_PRESETS.find((p) => p.theme === theme && p.lineColor === lineColor && p.showArea === showArea)?.name,
+    [theme, lineColor, showArea],
+  )
+
+  function applyPreset(preset: StylePreset) {
+    setTheme(preset.theme)
+    setLineColor(preset.lineColor)
+    setShowArea(preset.showArea)
+  }
 
   const svg = useMemo(() => {
     if (!data) return ""
@@ -216,6 +243,42 @@ export function StarsChartApp() {
           {/* Customization panel */}
           <Card className="flex h-fit flex-col gap-5 p-5">
             <h2 className="text-sm font-semibold">Customize</h2>
+
+            <div className="flex flex-col gap-2">
+              <Label>Style presets</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {STYLE_PRESETS.map((preset) => {
+                  const isActive = activePreset === preset.name
+                  return (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      aria-pressed={isActive}
+                      className={`flex flex-col items-center gap-1.5 rounded-lg border p-2 text-xs transition-colors hover:bg-accent ${
+                        isActive ? "border-foreground bg-accent" : "border-border"
+                      }`}
+                    >
+                      <span
+                        className="flex h-8 w-full items-end overflow-hidden rounded-sm"
+                        style={{ backgroundColor: THEME_PRESETS[preset.theme].bgColor }}
+                      >
+                        <span
+                          className="h-1 w-full"
+                          style={{
+                            backgroundColor: preset.lineColor,
+                            boxShadow: preset.showArea ? `0 4px 6px -2px ${preset.lineColor}` : "none",
+                          }}
+                        />
+                      </span>
+                      <span className={isActive ? "font-medium text-foreground" : "text-muted-foreground"}>
+                        {preset.name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="chart-title">Title</Label>
