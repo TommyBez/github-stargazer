@@ -116,9 +116,9 @@ export const STYLE_PRESETS: NamedStyle[] = [
     typography: { titleWeight: 700, titleCase: "none", titleTracking: 0.02, labelCase: "none", labelTracking: 0.02 },
     sketch: false,
   },
-  // Hand-drawn: handwriting font + wobbly sketched line.
+  // Sketch: handwriting font + wobbly sketched line.
   {
-    name: "Hand-drawn",
+    name: "Sketch",
     description: "Sketchy & handwritten",
     font: "hand",
     spacing: "comfortable",
