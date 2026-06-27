@@ -48,7 +48,7 @@ export function StarsChartApp() {
 
   const resolvedTitle = useMemo(() => {
     if (title.trim()) return title.trim()
-    return data ? `${data.fullName} — Stars` : "Star History"
+    return data ? data.fullName : "Star History"
   }, [title, data])
 
   const svg = useMemo(() => {
@@ -223,7 +223,7 @@ export function StarsChartApp() {
                 id="chart-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={`${data.fullName} — Stars`}
+                placeholder={data.fullName}
               />
             </div>
 

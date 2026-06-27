@@ -193,6 +193,5 @@ export function buildChartSvg(points: StarPoint[], options: ChartOptions): strin
   <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
   ${yLabels}
   ${xLabels}
-  <text x="${(width - PAD.right).toFixed(2)}" y="${(height - 16).toFixed(2)}" fill="${textColor}" font-family="sans-serif" font-size="12" text-anchor="end" opacity="0.5">star-history chart</text>
 </svg>`
 }
