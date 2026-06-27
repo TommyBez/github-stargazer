@@ -31,15 +31,48 @@ async function loadGoogleFont(family: string, weight: number, text: string): Pro
  * without needing any fonts, so they stay crisp inside the OG image. */
 function buildShapesSvg(
   geo: ReturnType<typeof computeChartGeometry>,
-  opts: { bgColor: string; gridColor: string; lineColor: string; fillColor: string; showArea: boolean },
+  opts: {
+    bgColor: string
+    gridColor: string
+    lineColor: string
+    fillColor: string
+    area: "gradient" | "solid" | "none"
+    grid: "full" | "horizontal" | "none"
+    lineWidth: number
+    glow: boolean
+  },
 ): string {
-  const { bgColor, gridColor, lineColor, fillColor, showArea } = opts
-  const gridLines = geo.gridLines
-    .map(
-      (g) =>
-        `<line x1="${geo.plotLeft}" y1="${g.y.toFixed(2)}" x2="${geo.plotRight.toFixed(2)}" y2="${g.y.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`,
-    )
-    .join("")
+  const { bgColor, gridColor, lineColor, fillColor, area, grid, lineWidth, glow } = opts
+
+  let gridLines = ""
+  if (grid !== "none") {
+    gridLines += geo.gridLines
+      .map(
+        (g) =>
+          `<line x1="${geo.plotLeft}" y1="${g.y.toFixed(2)}" x2="${geo.plotRight.toFixed(2)}" y2="${g.y.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`,
+      )
+      .join("")
+  }
+  if (grid === "full") {
+    gridLines += geo.xLabels
+      .map(
+        (l) =>
+          `<line x1="${l.x.toFixed(2)}" y1="${geo.plotTop}" x2="${l.x.toFixed(2)}" y2="${geo.plotBottom.toFixed(2)}" stroke="${gridColor}" stroke-width="1"/>`,
+      )
+      .join("")
+  }
+
+  const areaMarkup =
+    area === "none" || !geo.areaPath
+      ? ""
+      : area === "solid"
+        ? `<path d="${geo.areaPath}" fill="${fillColor}" fill-opacity="0.14"/>`
+        : `<path d="${geo.areaPath}" fill="url(#starGrad)"/>`
+
+  const lineMarkup = glow
+    ? `<path d="${geo.linePath}" fill="none" stroke="${lineColor}" stroke-width="${lineWidth}" stroke-linejoin="round" stroke-linecap="round" filter="url(#starGlow)" opacity="0.9"/>
+  <path d="${geo.linePath}" fill="none" stroke="${lineColor}" stroke-width="${lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>`
+    : `<path d="${geo.linePath}" fill="none" stroke="${lineColor}" stroke-width="${lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>`
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${geo.width}" height="${geo.height}" viewBox="0 0 ${geo.width} ${geo.height}">
   <defs>
@@ -47,11 +80,14 @@ function buildShapesSvg(
       <stop offset="0%" stop-color="${fillColor}" stop-opacity="0.45"/>
       <stop offset="100%" stop-color="${fillColor}" stop-opacity="0"/>
     </linearGradient>
+    <filter id="starGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="${(lineWidth * 1.6).toFixed(1)}"/>
+    </filter>
   </defs>
   <rect width="${geo.width}" height="${geo.height}" fill="${bgColor}"/>
   ${gridLines}
-  ${showArea && geo.areaPath ? `<path d="${geo.areaPath}" fill="url(#starGrad)"/>` : ""}
-  <path d="${geo.linePath}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  ${areaMarkup}
+  ${lineMarkup}
 </svg>`
 }
 
@@ -62,23 +98,38 @@ export async function GET(request: Request) {
   const lineColor = searchParams.get("color") ?? "#facc15"
   const title = searchParams.get("title") ?? undefined
 
+  // Style params (mirrors ChartStyle in the app).
+  const curve = (searchParams.get("curve") as "smooth" | "linear" | "step") ?? "linear"
+  const lineWidth = Number(searchParams.get("lw") ?? "2.5") || 2.5
+  const grid = (searchParams.get("grid") as "full" | "horizontal" | "none") ?? "horizontal"
+  const area = (searchParams.get("area") as "gradient" | "solid" | "none") ?? "gradient"
+  const glow = searchParams.get("glow") === "1"
+  const fontKey = (searchParams.get("font") as "sans" | "mono" | "serif") ?? "sans"
+
   const parsed = parseRepo(repoParam)
   const preset = THEME_PRESETS[theme] ?? THEME_PRESETS.dark
 
+  const FONT_FAMILY: Record<"sans" | "mono" | "serif", string> = {
+    sans: "Inter",
+    mono: "JetBrains Mono",
+    serif: "Source Serif 4",
+  }
+  const fontName = FONT_FAMILY[fontKey]
+
   const [regular, bold] = await Promise.all([
-    loadGoogleFont("Inter", 400, FONT_TEXT),
-    loadGoogleFont("Inter", 700, FONT_TEXT),
+    loadGoogleFont(fontName, 400, FONT_TEXT),
+    loadGoogleFont(fontName, 700, FONT_TEXT),
   ])
   const fonts = [
-    ...(regular ? [{ name: "Inter", data: regular, weight: 400 as const, style: "normal" as const }] : []),
-    ...(bold ? [{ name: "Inter", data: bold, weight: 700 as const, style: "normal" as const }] : []),
+    ...(regular ? [{ name: fontName, data: regular, weight: 400 as const, style: "normal" as const }] : []),
+    ...(bold ? [{ name: fontName, data: bold, weight: 700 as const, style: "normal" as const }] : []),
   ]
 
   let fallbackMessage = "Repository not found"
   try {
     if (!parsed) throw new Error("invalid repo")
     const data = await getStarHistory(parsed.owner, parsed.name)
-    const geo = computeChartGeometry(data.history, OG_W, OG_H)
+    const geo = computeChartGeometry(data.history, OG_W, OG_H, curve)
     const heading = title ?? data.fullName
 
     const shapesSvg = buildShapesSvg(geo, {
@@ -86,7 +137,10 @@ export async function GET(request: Request) {
       gridColor: preset.gridColor,
       lineColor,
       fillColor: lineColor,
-      showArea: true,
+      area,
+      grid,
+      lineWidth,
+      glow,
     })
     const dataUri = `data:image/svg+xml;base64,${Buffer.from(shapesSvg).toString("base64")}`
 
@@ -97,7 +151,7 @@ export async function GET(request: Request) {
           display: "flex",
           width: "100%",
           height: "100%",
-          fontFamily: "Inter",
+          fontFamily: fontName,
           color: preset.textColor,
         }}
       >
@@ -184,7 +238,7 @@ export async function GET(request: Request) {
           height: "100%",
           background: preset.bgColor,
           color: preset.textColor,
-          fontFamily: "Inter",
+          fontFamily: fontName,
           fontSize: 48,
           fontWeight: 700,
         }}

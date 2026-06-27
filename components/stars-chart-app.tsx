@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ColorPicker } from "@/components/color-picker"
-import { buildChartSvg, THEME_PRESETS, type ThemeName } from "@/lib/chart-svg"
+import { buildChartSvg, THEME_PRESETS, type ThemeName, type ChartStyle } from "@/lib/chart-svg"
 import type { RepoStarData } from "@/lib/github"
 
 const PREVIEW_W = 1000
@@ -36,15 +36,52 @@ interface StylePreset {
   theme: ThemeName
   lineColor: string
   showArea: boolean
+  style: ChartStyle
 }
 
 const STYLE_PRESETS: StylePreset[] = [
-  { name: "Classic", theme: "dark", lineColor: "#facc15", showArea: true },
-  { name: "Neon", theme: "midnight", lineColor: "#38bdf8", showArea: true },
-  { name: "Minimal", theme: "light", lineColor: "#94a3b8", showArea: false },
-  { name: "Sunset", theme: "dark", lineColor: "#fb923c", showArea: true },
-  { name: "Forest", theme: "light", lineColor: "#10b981", showArea: true },
-  { name: "Blush", theme: "midnight", lineColor: "#fb7185", showArea: false },
+  {
+    name: "Classic",
+    theme: "dark",
+    lineColor: "#facc15",
+    showArea: true,
+    style: { curve: "linear", lineWidth: 2.5, grid: "horizontal", areaFill: "gradient", glow: false, font: "sans" },
+  },
+  {
+    name: "Neon",
+    theme: "midnight",
+    lineColor: "#38bdf8",
+    showArea: true,
+    style: { curve: "smooth", lineWidth: 3, grid: "horizontal", areaFill: "gradient", glow: true, font: "sans" },
+  },
+  {
+    name: "Minimal",
+    theme: "light",
+    lineColor: "#94a3b8",
+    showArea: false,
+    style: { curve: "linear", lineWidth: 1.5, grid: "none", areaFill: "gradient", glow: false, font: "sans" },
+  },
+  {
+    name: "Terminal",
+    theme: "dark",
+    lineColor: "#10b981",
+    showArea: false,
+    style: { curve: "step", lineWidth: 2, grid: "horizontal", areaFill: "solid", glow: false, font: "mono" },
+  },
+  {
+    name: "Editorial",
+    theme: "light",
+    lineColor: "#1f2937",
+    showArea: true,
+    style: { curve: "smooth", lineWidth: 1.75, grid: "horizontal", areaFill: "solid", glow: false, font: "serif" },
+  },
+  {
+    name: "Sunset",
+    theme: "dark",
+    lineColor: "#fb923c",
+    showArea: true,
+    style: { curve: "smooth", lineWidth: 3.5, grid: "none", areaFill: "gradient", glow: true, font: "sans" },
+  },
 ]
 
 export function StarsChartApp() {
@@ -59,6 +96,7 @@ export function StarsChartApp() {
   const [theme, setTheme] = useState<ThemeName>("dark")
   const [lineColor, setLineColor] = useState(LINE_COLORS[0].value)
   const [showArea, setShowArea] = useState(true)
+  const [style, setStyle] = useState<ChartStyle>(STYLE_PRESETS[0].style)
 
   const [copied, setCopied] = useState(false)
 
@@ -68,14 +106,27 @@ export function StarsChartApp() {
   }, [title, data])
 
   const activePreset = useMemo(
-    () => STYLE_PRESETS.find((p) => p.theme === theme && p.lineColor === lineColor && p.showArea === showArea)?.name,
-    [theme, lineColor, showArea],
+    () =>
+      STYLE_PRESETS.find(
+        (p) =>
+          p.theme === theme &&
+          p.lineColor === lineColor &&
+          p.showArea === showArea &&
+          p.style.curve === style.curve &&
+          p.style.lineWidth === style.lineWidth &&
+          p.style.grid === style.grid &&
+          p.style.areaFill === style.areaFill &&
+          p.style.glow === style.glow &&
+          p.style.font === style.font,
+      )?.name,
+    [theme, lineColor, showArea, style],
   )
 
   function applyPreset(preset: StylePreset) {
     setTheme(preset.theme)
     setLineColor(preset.lineColor)
     setShowArea(preset.showArea)
+    setStyle(preset.style)
   }
 
   const svg = useMemo(() => {
@@ -88,8 +139,9 @@ export function StarsChartApp() {
       width: PREVIEW_W,
       height: PREVIEW_H,
       ...THEME_PRESETS[theme],
+      ...style,
     })
-  }, [data, resolvedTitle, lineColor, showArea, theme])
+  }, [data, resolvedTitle, lineColor, showArea, theme, style])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
@@ -158,10 +210,16 @@ export function StarsChartApp() {
       repo: activeRepo,
       theme,
       color: lineColor,
+      curve: style.curve,
+      lw: String(style.lineWidth),
+      grid: style.grid,
+      area: showArea ? style.areaFill : "none",
+      glow: style.glow ? "1" : "0",
+      font: style.font,
     })
     if (title.trim()) params.set("title", title.trim())
     return `/api/og?${params.toString()}`
-  }, [activeRepo, theme, lineColor, title])
+  }, [activeRepo, theme, lineColor, title, style, showArea])
 
   async function handleCopyOg() {
     if (!ogUrl) return
@@ -259,18 +317,7 @@ export function StarsChartApp() {
                         isActive ? "border-foreground bg-accent" : "border-border"
                       }`}
                     >
-                      <span
-                        className="flex h-8 w-full items-end overflow-hidden rounded-sm"
-                        style={{ backgroundColor: THEME_PRESETS[preset.theme].bgColor }}
-                      >
-                        <span
-                          className="h-1 w-full"
-                          style={{
-                            backgroundColor: preset.lineColor,
-                            boxShadow: preset.showArea ? `0 4px 6px -2px ${preset.lineColor}` : "none",
-                          }}
-                        />
-                      </span>
+                      <PresetPreview preset={preset} />
                       <span className={isActive ? "font-medium text-foreground" : "text-muted-foreground"}>
                         {preset.name}
                       </span>
@@ -365,6 +412,75 @@ export function StarsChartApp() {
         </div>
       )}
     </div>
+  )
+}
+
+function PresetPreview({ preset }: { preset: StylePreset }) {
+  const W = 100
+  const H = 44
+  const padX = 6
+  const top = 6
+  const bottom = 38
+  // Representative ascending sample series (value: 0 = low, 1 = high).
+  const sample = [0.15, 0.28, 0.4, 0.62, 0.9]
+  const pts = sample.map((v, i) => ({
+    x: padX + (i / (sample.length - 1)) * (W - padX * 2),
+    y: bottom - v * (bottom - top),
+  }))
+
+  let line = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`
+  if (preset.style.curve === "step") {
+    for (let i = 1; i < pts.length; i++) {
+      line += ` L${pts[i].x.toFixed(1)},${pts[i - 1].y.toFixed(1)} L${pts[i].x.toFixed(1)},${pts[i].y.toFixed(1)}`
+    }
+  } else if (preset.style.curve === "smooth") {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] ?? pts[i]
+      const p1 = pts[i]
+      const p2 = pts[i + 1]
+      const p3 = pts[i + 2] ?? p2
+      const cp1x = p1.x + (p2.x - p0.x) / 6
+      const cp1y = p1.y + (p2.y - p0.y) / 6
+      const cp2x = p2.x - (p3.x - p1.x) / 6
+      const cp2y = p2.y - (p3.y - p1.y) / 6
+      line += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`
+    }
+  } else {
+    for (let i = 1; i < pts.length; i++) line += ` L${pts[i].x.toFixed(1)},${pts[i].y.toFixed(1)}`
+  }
+
+  const area = `${line} L${pts[pts.length - 1].x.toFixed(1)},${bottom} L${pts[0].x.toFixed(1)},${bottom} Z`
+  const bg = THEME_PRESETS[preset.theme].bgColor
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="h-9 w-full rounded-sm"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <rect width={W} height={H} fill={bg} />
+      {preset.showArea && <path d={area} fill={preset.lineColor} fillOpacity={preset.style.areaFill === "solid" ? 0.18 : 0.28} />}
+      {preset.style.glow && (
+        <path
+          d={line}
+          fill="none"
+          stroke={preset.lineColor}
+          strokeWidth={preset.style.lineWidth * 1.6}
+          strokeOpacity={0.4}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      )}
+      <path
+        d={line}
+        fill="none"
+        stroke={preset.lineColor}
+        strokeWidth={preset.style.lineWidth}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }
 
