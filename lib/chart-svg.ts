@@ -22,6 +22,87 @@ export type ThemeName = keyof typeof THEME_PRESETS
 
 const PAD = { top: 72, right: 36, bottom: 56, left: 72 }
 
+export const CHART_PAD = PAD
+
+export interface ChartGeometry {
+  width: number
+  height: number
+  plotLeft: number
+  plotRight: number
+  plotTop: number
+  plotBottom: number
+  linePath: string
+  areaPath: string
+  gridLines: { y: number }[]
+  yLabels: { y: number; text: string }[]
+  xLabels: { x: number; text: string }[]
+  lastStars: number
+}
+
+/**
+ * Compute the pure geometry (paths, grid + tick positions, formatted labels)
+ * for a star-history chart. Shared by the SVG download builder and the OG image
+ * route so both stay visually identical, while letting the OG route render text
+ * with a real embedded font instead of relying on the rasterizer's font set.
+ */
+export function computeChartGeometry(points: StarPoint[], width: number, height: number): ChartGeometry {
+  const plotW = width - PAD.left - PAD.right
+  const plotH = height - PAD.top - PAD.bottom
+  const plotBottom = PAD.top + plotH
+
+  const xs = points.map((p) => new Date(p.date).getTime())
+  const minX = points.length ? Math.min(...xs) : 0
+  const maxX = points.length ? Math.max(...xs) : 1
+  const maxY = points.length ? Math.max(...points.map((p) => p.stars)) : 1
+  const rangeX = maxX - minX || 1
+
+  const sx = (t: number) => PAD.left + ((t - minX) / rangeX) * plotW
+  const sy = (v: number) => PAD.top + plotH - (v / maxY) * plotH
+
+  const coords = points.map((p) => ({ x: sx(new Date(p.date).getTime()), y: sy(p.stars) }))
+
+  const linePath = coords
+    .map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(2)},${c.y.toFixed(2)}`)
+    .join(" ")
+
+  const areaPath = coords.length
+    ? `${linePath} L${coords[coords.length - 1].x.toFixed(2)},${plotBottom.toFixed(2)} L${coords[0].x.toFixed(2)},${plotBottom.toFixed(2)} Z`
+    : ""
+
+  const yTicks = 5
+  const gridLines: { y: number }[] = []
+  const yLabels: { y: number; text: string }[] = []
+  for (let i = 0; i <= yTicks; i++) {
+    const value = (maxY / yTicks) * i
+    const y = sy(value)
+    gridLines.push({ y })
+    yLabels.push({ y, text: formatNumber(Math.round(value)) })
+  }
+
+  const xTickIdx = points.length ? [0, Math.floor(points.length / 2), points.length - 1] : []
+  const xLabels = xTickIdx.map((idx) => ({
+    x: coords[idx].x,
+    text: formatDate(points[idx].date),
+  }))
+
+  return {
+    width,
+    height,
+    plotLeft: PAD.left,
+    plotRight: PAD.left + plotW,
+    plotTop: PAD.top,
+    plotBottom,
+    linePath,
+    areaPath,
+    gridLines,
+    yLabels,
+    xLabels,
+    lastStars: points.length ? points[points.length - 1].stars : 0,
+  }
+}
+
+export { formatNumber }
+
 function escapeXml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
