@@ -264,7 +264,13 @@ export function StarsChartApp() {
                     />
                   ))}
                 </ToggleGroup>
-                <ColorPicker value={lineColor} onChange={setLineColor} aria-label="Custom line color" />
+                <div className="mx-1 h-7 w-px bg-border" aria-hidden="true" />
+                <ColorPicker
+                  value={lineColor}
+                  onChange={setLineColor}
+                  aria-label="Custom line color"
+                  className="rounded-md"
+                />
               </div>
             </div>
 
