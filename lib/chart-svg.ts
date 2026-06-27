@@ -22,10 +22,13 @@ export const DEFAULT_STYLE: ChartStyle = {
   glow: false,
 }
 
+// These mirror the Google Fonts loaded in app/layout.tsx and the OG route's
+// FONT_FAMILY map, so the live preview, PNG/SVG export, and OG image all render
+// with the exact same typefaces.
 export const FONT_STACKS: Record<FontFamily, string> = {
-  sans: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-  mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-  serif: "ui-serif, Georgia, Cambria, Times New Roman, serif",
+  sans: "'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+  mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  serif: "'Source Serif 4', ui-serif, Georgia, Cambria, Times New Roman, serif",
   display: "'Fraunces', ui-serif, Georgia, serif",
   hand: "'Caveat', 'Comic Sans MS', ui-sans-serif, cursive",
 }
