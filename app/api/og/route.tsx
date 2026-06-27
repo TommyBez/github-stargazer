@@ -135,7 +135,7 @@ export async function GET(request: Request) {
 
   const FONT_FAMILY: Record<FontFamily, string> = {
     sans: "Inter",
-    mono: "JetBrains Mono",
+    mono: "Geist Mono",
     serif: "Source Serif 4",
     display: "Fraunces",
     hand: "Caveat",

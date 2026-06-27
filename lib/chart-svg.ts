@@ -27,7 +27,7 @@ export const DEFAULT_STYLE: ChartStyle = {
 // with the exact same typefaces.
 export const FONT_STACKS: Record<FontFamily, string> = {
   sans: "'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-  mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  mono: "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
   serif: "'Source Serif 4', ui-serif, Georgia, Cambria, Times New Roman, serif",
   display: "'Fraunces', ui-serif, Georgia, serif",
   hand: "'Caveat', 'Comic Sans MS', ui-sans-serif, cursive",
@@ -107,13 +107,13 @@ export const STYLE_PRESETS: NamedStyle[] = [
     typography: { titleWeight: 400, titleCase: "none", titleTracking: 0, labelCase: "none", labelTracking: 0 },
     sketch: false,
   },
-  // Technical monospace, uppercase tracked labels.
+  // Technical monospace with subtle tracking, mixed case.
   {
     name: "Terminal",
     description: "Monospace, technical",
     font: "mono",
     spacing: "compact",
-    typography: { titleWeight: 700, titleCase: "upper", titleTracking: 0.05, labelCase: "upper", labelTracking: 0.05 },
+    typography: { titleWeight: 700, titleCase: "none", titleTracking: 0.02, labelCase: "none", labelTracking: 0.02 },
     sketch: false,
   },
   // Hand-drawn: handwriting font + wobbly sketched line.
