@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ColorPicker } from "@/components/color-picker"
 import { encodeShareConfig } from "@/lib/share-config"
@@ -425,13 +424,15 @@ export function StarsChartApp() {
                 <Label htmlFor="chart-lw">Line width</Label>
                 <span className="text-xs text-muted-foreground">{style.lineWidth.toFixed(1)}px</span>
               </div>
-              <Slider
+              <input
                 id="chart-lw"
+                type="range"
                 min={1}
                 max={5}
                 step={0.5}
-                value={[style.lineWidth]}
-                onValueChange={(v) => updateStyle({ lineWidth: Array.isArray(v) ? v[0] : v })}
+                value={style.lineWidth}
+                onChange={(e) => updateStyle({ lineWidth: Number(e.currentTarget.value) })}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-ring [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow-sm [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-ring [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-sm"
               />
             </div>
 
