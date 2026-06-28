@@ -1,10 +1,24 @@
-# Stargazer
+<p align="center">
+  <img src="https://shieldcn.dev/header/gradient.svg?title=Stargazer&subtitle=Beautiful%20GitHub%20star-history%20charts&logo=github&theme=zinc" alt="Stargazer" />
+</p>
+
+<p align="center">
+  <a href="https://github-stargazer.vercel.app"><img src="https://shieldcn.dev/badge/demo-live-brightgreen.svg?variant=secondary" alt="Live demo" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/stargazers"><img src="https://shieldcn.dev/github/stars/TommyBez/github-stargazer.svg?variant=secondary" alt="GitHub stars" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/network/members"><img src="https://shieldcn.dev/github/forks/TommyBez/github-stargazer.svg?variant=secondary" alt="GitHub forks" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/commits/main"><img src="https://shieldcn.dev/github/last-commit/TommyBez/github-stargazer.svg?variant=secondary" alt="Last commit" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/graphs/contributors"><img src="https://shieldcn.dev/github/contributors/TommyBez/github-stargazer.svg?variant=secondary" alt="Contributors" /></a>
+</p>
 
 Generate beautiful, shareable star-history charts for any public GitHub repository.
 
 Paste a repo, customize the look, and download a chart image built for social posts — or copy a share link with Open Graph / Twitter card previews.
 
-**[Try it live →](https://github-stargazer.vercel.app)** · **[View source on GitHub →](https://github.com/TommyBez/github-stargazer)**
+<p align="center">
+  <a href="https://github.com/TommyBez/github-stargazer">
+    <img src="https://shieldcn.dev/chart/github/stars/TommyBez/github-stargazer.svg" alt="Star history" />
+  </a>
+</p>
 
 ## Features
 
