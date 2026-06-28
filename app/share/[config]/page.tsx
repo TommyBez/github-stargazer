@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { headers } from "next/headers"
+import Link from "next/link"
 import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-image"
 import { decodeShareConfig } from "@/lib/share-config"
 import { getRequestOrigin } from "@/lib/site-url"
@@ -90,8 +91,10 @@ export default async function SharePage({
         margin: 0,
         minHeight: "100dvh",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        gap: 20,
         background: "#0a0a0a",
         padding: 16,
       }}
@@ -104,6 +107,24 @@ export default async function SharePage({
         height={630}
         style={{ width: "100%", height: "auto", maxWidth: 1200, display: "block", borderRadius: 12 }}
       />
+      <Link
+        href="/"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "10px 18px",
+          borderRadius: 8,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          background: "rgba(255, 255, 255, 0.08)",
+          color: "#fafafa",
+          fontSize: 14,
+          fontWeight: 500,
+          textDecoration: "none",
+        }}
+      >
+        Make your own
+      </Link>
     </main>
   )
 }
