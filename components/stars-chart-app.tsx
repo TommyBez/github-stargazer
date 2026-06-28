@@ -78,6 +78,10 @@ export function StarsChartApp() {
   // Everything else is individually selectable.
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
 
+  function updateStyle(patch: Partial<ChartStyle>) {
+    setStyle((prev) => ({ ...prev, ...patch }))
+  }
+
   const [copied, setCopied] = useState(false)
 
   async function handleCopyShare() {
