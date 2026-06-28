@@ -1,33 +1,90 @@
-# github-stargazer
+# Stargazer
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+Generate beautiful, shareable star-history charts for any public GitHub repository.
 
-## Built with v0
+Paste a repo like `vercel/next.js`, customize the look, and download a chart image built for social posts — or copy a share link with Open Graph / Twitter card previews.
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+**[Try it live →](https://github-stargazer.vercel.app)** · **[View source on GitHub →](https://github.com/TommyBez/github-stargazer)**
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_jCFA0HC73UemyFxu4N5vCTAvS4vL)
+## Features
 
-## Getting Started
+- **Live GitHub data** — star history is fetched from the GitHub REST API at request time
+- **Rich customization** — themes (dark, light, midnight), line colors, curve type, grid style, area fill, glow, typography presets, and more
+- **Export** — download charts as PNG or SVG
+- **Shareable links** — copy a URL that encodes your chart config; shared pages render OG and Twitter preview images automatically
+- **No account required** — works with public repositories out of the box
 
-First, run the development server:
+## Getting started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [pnpm](https://pnpm.io/)
+
+### Install and run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), enter a repository (`owner/repo` or a full GitHub URL), and click **Generate chart**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for production
 
-## Learn More
+```bash
+pnpm build
+pnpm start
+```
 
-To learn more, take a look at the following resources:
+## Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` or `GITHUB_TOKEN_2` | No | GitHub personal access token. Without it, the app uses the unauthenticated API (~60 requests/hour per IP). Set one of these to raise the rate limit. |
+
+Create a `.env.local` file in the project root:
+
+```bash
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+```
+
+## How it works
+
+1. The browser calls `GET /api/stars?repo=owner/name`.
+2. The route handler in `app/api/stars/route.ts` parses the repo, fetches stargazer timestamps from GitHub, and returns cumulative star history as JSON.
+3. The client renders an SVG chart via `lib/chart-svg.ts` and supports PNG export from that SVG.
+4. Share URLs use `/share/[config]` where `config` is a base64url-encoded query string of chart settings. Next.js `opengraph-image` and `twitter-image` routes generate social preview images from the same config.
+
+## Project structure
+
+```
+app/
+  api/stars/          # GitHub star history API
+  api/og/             # OG image generation
+  share/[config]/     # Shareable chart pages + social images
+  page.tsx            # Main app
+components/
+  stars-chart-app.tsx # Chart workbench UI
+lib/
+  github.ts           # GitHub API client
+  chart-svg.ts        # SVG chart renderer
+  share-config.ts     # Share URL encoding/decoding
+  site-url.ts         # Metadata base URL helpers
+```
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
+- [React 19](https://react.dev/)
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- Custom SVG chart renderer (`lib/chart-svg.ts`)
+
+## Deployment
+
+The app is designed for [Vercel](https://vercel.com/). Set `GITHUB_TOKEN` in the project environment variables for production rate limits. Site URLs for metadata and share pages are derived automatically from Vercel system variables (`VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_URL`).
+
+## License
+
+Not specified in this repository.
