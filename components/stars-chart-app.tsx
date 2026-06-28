@@ -617,19 +617,19 @@ export function StarsChartApp() {
             {/* Social share */}
             <div className="flex flex-col gap-2 border-t border-border pt-5">
               <Label>Share on social</Label>
-              <p
-                role="status"
-                aria-live="polite"
-                className={`text-xs ${copyError ? "text-destructive" : "text-muted-foreground"}`}
-              >
+              {/* Keep the description constant on the success path so the panel
+                  never reflows — the button's check icon is the visible
+                  confirmation, and the live region below announces it for screen
+                  readers. The error message stays visible because it's rare and
+                  the user has to act on it. */}
+              <p className={`text-xs ${copyError ? "text-destructive" : "text-muted-foreground"}`}>
                 {copyError
                   ? "Clipboard access was blocked. Open the preview, then copy the URL from the address bar."
-                  : copying
-                    ? "Copying share link..."
-                  : copied
-                    ? "Share link copied."
-                    : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
+                  : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
               </p>
+              <span role="status" aria-live="polite" className="sr-only">
+                {copying ? "Copying share link…" : copied ? "Share link copied." : copyError ? "Copy failed." : ""}
+              </span>
               <Button
                 ref={copyButtonRef}
                 onClick={handleCopyShare}
