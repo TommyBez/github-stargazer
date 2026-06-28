@@ -84,12 +84,12 @@ lib/
 ## Tech stack
 
 <p align="center">
-  <a href="https://nextjs.org/"><img src="https://shieldcn.dev/npm/next.svg?variant=branded" alt="Next.js" /></a>
-  <a href="https://react.dev/"><img src="https://shieldcn.dev/npm/react.svg?variant=branded" alt="React" /></a>
-  <a href="https://tailwindcss.com/"><img src="https://shieldcn.dev/npm/tailwindcss.svg?variant=branded" alt="Tailwind CSS" /></a>
-  <a href="https://ui.shadcn.com/"><img src="https://shieldcn.dev/badge/shadcn/ui-black.svg?variant=branded&logo=shadcnui" alt="shadcn/ui" /></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://shieldcn.dev/npm/typescript.svg?variant=branded" alt="TypeScript" /></a>
-  <a href="https://vercel.com/"><img src="https://shieldcn.dev/badge/vercel-deployed-black.svg?variant=branded&logo=vercel" alt="Vercel" /></a>
+  <a href="https://nextjs.org/"><img src="https://shieldcn.dev/badge/Next.js-16-000000.svg?logo=nextdotjs&split=true&variant=secondary" alt="Next.js" /></a>
+  <a href="https://react.dev/"><img src="https://shieldcn.dev/badge/React-19-61DAFB.svg?logo=react&split=true&labelColor=20232A&color=61DAFB" alt="React" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://shieldcn.dev/badge/Tailwind-4-38BDF8.svg?logo=tailwindcss&split=true" alt="Tailwind CSS" /></a>
+  <a href="https://ui.shadcn.com/"><img src="https://shieldcn.dev/badge/shadcn/ui-black.svg?logo=shadcnui&split=true" alt="shadcn/ui" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://shieldcn.dev/badge/TypeScript-5.7-3178C6.svg?logo=typescript&split=true" alt="TypeScript" /></a>
+  <a href="https://vercel.com/"><img src="https://shieldcn.dev/badge/Vercel-deployed-000000.svg?logo=vercel&split=true" alt="Vercel" /></a>
 </p>
 
 Custom SVG chart renderer (`lib/chart-svg.ts`).
