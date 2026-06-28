@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { headers } from "next/headers"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-image"
 import { decodeShareConfig } from "@/lib/share-config"
 import { getRequestOrigin } from "@/lib/site-url"
@@ -86,45 +87,18 @@ export default async function SharePage({
   const alt = repo ? `Star history chart for ${repo}` : "Star history chart"
 
   return (
-    <main
-      style={{
-        margin: 0,
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 20,
-        background: "#0a0a0a",
-        padding: 16,
-      }}
-    >
+    <main className="m-0 flex min-h-dvh flex-col items-center justify-center gap-5 bg-background p-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imgSrc || "/placeholder.svg"}
         alt={alt}
         width={1200}
         height={630}
-        style={{ width: "100%", height: "auto", maxWidth: 1200, display: "block", borderRadius: 12 }}
+        className="block h-auto w-full max-w-[1200px] rounded-xl"
       />
-      <Link
-        href="/"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "10px 18px",
-          borderRadius: 8,
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          background: "rgba(255, 255, 255, 0.08)",
-          color: "#fafafa",
-          fontSize: 14,
-          fontWeight: 500,
-          textDecoration: "none",
-        }}
-      >
+      <Button render={<Link href="/" />} variant="outline">
         Make your own
-      </Link>
+      </Button>
     </main>
   )
 }
