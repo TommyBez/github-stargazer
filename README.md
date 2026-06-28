@@ -2,7 +2,7 @@
 
 Generate beautiful, shareable star-history charts for any public GitHub repository.
 
-Paste a repo like `vercel/next.js`, customize the look, and download a chart image built for social posts — or copy a share link with Open Graph / Twitter card previews.
+Paste a repo, customize the look, and download a chart image built for social posts — or copy a share link with Open Graph / Twitter card previews.
 
 **[Try it live →](https://github-stargazer.vercel.app)** · **[View source on GitHub →](https://github.com/TommyBez/github-stargazer)**
 
