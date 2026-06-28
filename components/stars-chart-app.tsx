@@ -101,6 +101,7 @@ export function StarsChartApp() {
   const [copyError, setCopyError] = useState(false)
   const [copying, setCopying] = useState(false)
   const copyResetTimer = useRef<number | null>(null)
+  const copyButtonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     return () => {
@@ -116,11 +117,12 @@ export function StarsChartApp() {
     setCopying(true)
     setCopied(false)
     setCopyError(false)
-    const didCopy = await copyTextToClipboard(absolute)
+    const didCopy = await copyTextToClipboard(absolute, copyButtonRef.current)
 
     setCopying(false)
     setCopied(didCopy)
     setCopyError(!didCopy)
+    window.requestAnimationFrame(() => copyButtonRef.current?.focus({ preventScroll: true }))
 
     if (copyResetTimer.current !== null) {
       window.clearTimeout(copyResetTimer.current)
@@ -495,7 +497,14 @@ export function StarsChartApp() {
                     ? "Share link copied."
                     : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
               </p>
-              <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start" disabled={copying}>
+              <Button
+                ref={copyButtonRef}
+                onClick={handleCopyShare}
+                variant="outline"
+                size="sm"
+                className="justify-start"
+                disabled={copying}
+              >
                 {copying ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : copied ? (
@@ -542,7 +551,7 @@ function EmptyState() {
   )
 }
 
-async function copyTextToClipboard(text: string): Promise<boolean> {
+async function copyTextToClipboard(text: string, focusTarget: HTMLElement | null): Promise<boolean> {
   if (navigator.clipboard) {
     const didCopy = await copyWithClipboardApi(text)
     if (didCopy) {
@@ -559,6 +568,7 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
 
   const selection = document.getSelection()
   const selectedRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
+  const activeElement = focusTarget ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
 
   document.body.appendChild(textarea)
   textarea.focus()
@@ -574,6 +584,9 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
     if (selection && selectedRange) {
       selection.removeAllRanges()
       selection.addRange(selectedRange)
+    }
+    if (activeElement?.isConnected) {
+      activeElement.focus({ preventScroll: true })
     }
   }
 

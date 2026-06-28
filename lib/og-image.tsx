@@ -146,18 +146,33 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
     hand: "Caveat",
   }
   const fontName = FONT_FAMILY[fontKey] ?? "Inter"
-  const fontText = `${FONT_TEXT_BASE}${repoParam}${title ?? ""}`
+  const requestedTitle = title ?? repoParam
+  const fontText = Array.from(
+    new Set(
+      `${FONT_TEXT_BASE}${repoParam}${requestedTitle}${
+        typo.titleCase === "upper" ? requestedTitle.toUpperCase() : ""
+      }`,
+    ),
+  ).join("")
 
-  const [regular, bold, heavy] = await Promise.all([
+  const shouldLoadFallbackFont = fontName !== "Inter"
+  const [regular, bold, heavy, fallbackRegular, fallbackBold, fallbackHeavy] = await Promise.all([
     loadGoogleFont(fontName, 400, fontText),
     loadGoogleFont(fontName, 700, fontText),
     titleWeight === 800 ? loadGoogleFont(fontName, 800, fontText) : Promise.resolve(null),
+    shouldLoadFallbackFont ? loadGoogleFont("Inter", 400, fontText) : Promise.resolve(null),
+    shouldLoadFallbackFont ? loadGoogleFont("Inter", 700, fontText) : Promise.resolve(null),
+    shouldLoadFallbackFont && titleWeight === 800 ? loadGoogleFont("Inter", 800, fontText) : Promise.resolve(null),
   ])
   const fonts = [
     ...(regular ? [{ name: fontName, data: regular, weight: 400 as const, style: "normal" as const }] : []),
     ...(bold ? [{ name: fontName, data: bold, weight: 700 as const, style: "normal" as const }] : []),
     ...(heavy ? [{ name: fontName, data: heavy, weight: 800 as const, style: "normal" as const }] : []),
+    ...(fallbackRegular ? [{ name: "Inter", data: fallbackRegular, weight: 400 as const, style: "normal" as const }] : []),
+    ...(fallbackBold ? [{ name: "Inter", data: fallbackBold, weight: 700 as const, style: "normal" as const }] : []),
+    ...(fallbackHeavy ? [{ name: "Inter", data: fallbackHeavy, weight: 800 as const, style: "normal" as const }] : []),
   ]
+  const fontFamily = shouldLoadFallbackFont ? `${fontName}, Inter` : fontName
 
   let fallbackMessage = "Repository not found"
   try {
@@ -187,7 +202,7 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
           display: "flex",
           width: "100%",
           height: "100%",
-          fontFamily: fontName,
+          fontFamily,
           color: preset.textColor,
         }}
       >
@@ -287,7 +302,7 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
           height: "100%",
           background: preset.bgColor,
           color: preset.textColor,
-          fontFamily: fontName,
+          fontFamily,
           padding: 80,
         }}
       >
