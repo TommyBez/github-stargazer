@@ -14,12 +14,6 @@ Generate beautiful, shareable star-history charts for any public GitHub reposito
 
 Paste a repo, customize the look, and download a chart image built for social posts — or copy a share link with Open Graph / Twitter card previews.
 
-<p align="center">
-  <a href="https://github.com/TommyBez/github-stargazer">
-    <img src="https://shieldcn.dev/chart/github/stars/TommyBez/github-stargazer.svg" alt="Star history" />
-  </a>
-</p>
-
 ## Features
 
 - **Live GitHub data** — star history is fetched from the GitHub REST API at request time
@@ -89,11 +83,16 @@ lib/
 
 ## Tech stack
 
-- [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
-- [React 19](https://react.dev/)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- Custom SVG chart renderer (`lib/chart-svg.ts`)
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://shieldcn.dev/npm/next.svg?variant=branded" alt="Next.js" /></a>
+  <a href="https://react.dev/"><img src="https://shieldcn.dev/npm/react.svg?variant=branded" alt="React" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://shieldcn.dev/npm/tailwindcss.svg?variant=branded" alt="Tailwind CSS" /></a>
+  <a href="https://ui.shadcn.com/"><img src="https://shieldcn.dev/badge/shadcn/ui-black.svg?variant=branded&logo=shadcnui" alt="shadcn/ui" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://shieldcn.dev/npm/typescript.svg?variant=branded" alt="TypeScript" /></a>
+  <a href="https://vercel.com/"><img src="https://shieldcn.dev/badge/vercel-deployed-black.svg?variant=branded&logo=vercel" alt="Vercel" /></a>
+</p>
+
+Custom SVG chart renderer (`lib/chart-svg.ts`).
 
 ## Deployment
 
@@ -102,3 +101,9 @@ The app is designed for [Vercel](https://vercel.com/). Set `GITHUB_TOKEN` in the
 ## License
 
 Not specified in this repository.
+
+<p align="center">
+  <a href="https://github.com/TommyBez/github-stargazer">
+    <img src="https://shieldcn.dev/chart/github/stars/TommyBez/github-stargazer.svg" alt="Star history" />
+  </a>
+</p>
