@@ -9,7 +9,7 @@ export default function Page() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-2">
             <Star className="size-4 fill-star text-star" />
-            <span className="font-heading text-sm font-semibold tracking-tight">Star Charts</span>
+            <span className="font-heading text-sm font-semibold tracking-tight">Stargazer</span>
           </div>
           <a
             href="https://github.com/TommyBez/github-stargazer"
@@ -65,7 +65,7 @@ export default function Page() {
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
             <Star className="size-3.5 fill-star text-star" />
-            <span className="font-heading text-sm font-semibold tracking-tight">Star Charts</span>
+            <span className="font-heading text-sm font-semibold tracking-tight">Stargazer</span>
           </div>
           <div className="flex items-center gap-4">
             <a

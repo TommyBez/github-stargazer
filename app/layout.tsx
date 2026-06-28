@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Space_Grotesk } from 'next/font/google'
+import { getMetadataBase } from '@/lib/site-url'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -13,21 +14,6 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
 })
-
-function getMetadataBase(): URL {
-  const configuredUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL
-
-  if (!configuredUrl) {
-    return new URL('https://github-stargazers.vercel.app')
-  }
-
-  const url = configuredUrl.startsWith('http://') || configuredUrl.startsWith('https://')
-    ? configuredUrl
-    : `https://${configuredUrl}`
-
-  return new URL(url)
-}
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),

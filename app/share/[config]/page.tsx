@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-image"
 import { decodeShareConfig } from "@/lib/share-config"
+import { getRequestOrigin } from "@/lib/site-url"
 
 export const runtime = "nodejs"
 
@@ -13,44 +14,8 @@ function getSharePath(config: string): string {
   return `/share/${encodeURIComponent(config)}`
 }
 
-function getConfiguredMetadataBase(): URL {
-  const configuredUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL
-
-  if (!configuredUrl) {
-    return new URL("https://github-stargazers.vercel.app")
-  }
-
-  const url =
-    configuredUrl.startsWith("http://") || configuredUrl.startsWith("https://")
-      ? configuredUrl
-      : `https://${configuredUrl}`
-
-  return new URL(url)
-}
-
-function firstHeaderValue(value: string | null): string | null {
-  return value?.split(",")[0]?.trim() || null
-}
-
-function getOriginFromHeaders(requestHeaders: Headers): URL | null {
-  const host = firstHeaderValue(requestHeaders.get("x-forwarded-host")) ?? firstHeaderValue(requestHeaders.get("host"))
-  if (!host) return null
-
-  const protocol =
-    firstHeaderValue(requestHeaders.get("x-forwarded-proto")) ??
-    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : null)
-  if (!protocol) return null
-
-  try {
-    return new URL(`${protocol}://${host}`)
-  } catch {
-    return null
-  }
-}
-
 async function getShareMetadataBase(): Promise<URL> {
-  return getOriginFromHeaders(await headers()) ?? getConfiguredMetadataBase()
+  return getRequestOrigin(await headers())
 }
 
 export async function generateMetadata({
