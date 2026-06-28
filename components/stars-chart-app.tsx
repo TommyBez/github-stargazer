@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 import { Star, Download, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -116,25 +116,35 @@ export function StarsChartApp() {
   }, [styleName])
 
   const font = namedStyle.font
-  const spacing = SPACING_CONFIGS[namedStyle.spacing]
+
+  // Defer the inputs that feed the expensive SVG regeneration. This keeps the
+  // controls (slider drag, color picker) responsive: the thumb/label update
+  // immediately while the heavy chart re-render happens at a lower priority,
+  // so dragging the slider never loses pointer capture mid-interaction.
+  const deferredStyle = useDeferredValue(style)
+  const deferredLineColor = useDeferredValue(lineColor)
+  const deferredShowArea = useDeferredValue(showArea)
+  const deferredTheme = useDeferredValue(theme)
+  const deferredNamedStyle = useDeferredValue(namedStyle)
+  const deferredTitle = useDeferredValue(resolvedTitle)
 
   const svg = useMemo(() => {
     if (!data) return ""
     return buildChartSvg(data.history, {
-      title: resolvedTitle,
-      lineColor,
-      fillColor: lineColor,
-      showArea,
+      title: deferredTitle,
+      lineColor: deferredLineColor,
+      fillColor: deferredLineColor,
+      showArea: deferredShowArea,
       width: PREVIEW_W,
       height: PREVIEW_H,
-      font,
-      spacing,
-      typography: namedStyle.typography,
-      sketch: namedStyle.sketch,
-      ...THEME_PRESETS[theme],
-      ...style,
+      font: deferredNamedStyle.font,
+      spacing: SPACING_CONFIGS[deferredNamedStyle.spacing],
+      typography: deferredNamedStyle.typography,
+      sketch: deferredNamedStyle.sketch,
+      ...THEME_PRESETS[deferredTheme],
+      ...deferredStyle,
     })
-  }, [data, resolvedTitle, lineColor, showArea, theme, style, font, spacing, namedStyle])
+  }, [data, deferredTitle, deferredLineColor, deferredShowArea, deferredTheme, deferredStyle, deferredNamedStyle])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
