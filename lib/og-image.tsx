@@ -33,15 +33,23 @@ const FALLBACK_CACHE_CONTROL = "public, max-age=60"
 const FONT_TEXT_BASE =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-—/:_&★kStarHistoryNotFound"
 
+// Fonts are fetched from Google's CDN at render time. A social crawler
+// (X/Twitter, …) gives the image only a few seconds before it gives up and
+// shows a blank card, so an unbounded `fetch` that stalls — which can happen
+// from a serverless region even when it is fast elsewhere — is enough to break
+// every preview. The font is purely cosmetic (Satori falls back to a built-in
+// face), so we cap each attempt and degrade gracefully on timeout.
+const FONT_FETCH_TIMEOUT_MS = 2500
+
 async function loadGoogleFont(family: string, weight: number, text: string): Promise<ArrayBuffer | null> {
   try {
     const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(
       family,
     )}:wght@${weight}&text=${encodeURIComponent(text)}`
-    const css = await (await fetch(url)).text()
+    const css = await (await fetch(url, { signal: AbortSignal.timeout(FONT_FETCH_TIMEOUT_MS) })).text()
     const resource = css.match(/src: url\((.+?)\) format\(/)
     if (!resource) return null
-    const res = await fetch(resource[1])
+    const res = await fetch(resource[1], { signal: AbortSignal.timeout(FONT_FETCH_TIMEOUT_MS) })
     if (!res.ok) return null
     return await res.arrayBuffer()
   } catch {
