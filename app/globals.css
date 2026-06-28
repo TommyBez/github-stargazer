@@ -187,9 +187,10 @@
   }
 }
 
-/* Honor the OS "reduce motion" setting: neutralize entrance animations,
-   count-ups, hover scaling, and transitions so the UI stays calm for users
-   who opt out, without changing any colors, type, or layout tokens. */
+/* Honor the OS "reduce motion" setting: collapse the duration of entrance
+   animations and transitions so they resolve instantly instead of sweeping.
+   Transform-based affordances (e.g. hover scale) are gated separately with
+   `motion-safe:` at the component level. No colors, type, or layout change. */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

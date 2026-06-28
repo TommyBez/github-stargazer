@@ -92,12 +92,14 @@ function useCountUp(target: number, durationMs = 900) {
     const from = fromRef.current
     if (from === target) return
     let raf = 0
+    let latest = from
     let startTs: number | null = null
     const tick = (ts: number) => {
       if (startTs === null) startTs = ts
       const t = Math.min(1, (ts - startTs) / durationMs)
       const eased = 1 - Math.pow(1 - t, 3)
-      setValue(Math.round(from + (target - from) * eased))
+      latest = Math.round(from + (target - from) * eased)
+      setValue(latest)
       if (t < 1) {
         raf = requestAnimationFrame(tick)
       } else {
@@ -105,7 +107,12 @@ function useCountUp(target: number, durationMs = 900) {
       }
     }
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    // If interrupted mid-flight (target changed), resume from the value on
+    // screen instead of snapping back to this run's start.
+    return () => {
+      cancelAnimationFrame(raf)
+      fromRef.current = latest
+    }
   }, [target, durationMs, reduced])
 
   return value
@@ -256,6 +263,13 @@ export function StarsChartApp() {
   async function runGenerate(rawValue: string) {
     const value = rawValue.trim()
     if (!value || loading) return
+    // Clear any lingering "Saved PNG/SVG" feedback so it can't bleed onto the
+    // next chart before that artifact has actually been downloaded.
+    if (downloadResetTimer.current !== null) {
+      window.clearTimeout(downloadResetTimer.current)
+      downloadResetTimer.current = null
+    }
+    setDownloaded(null)
     setLoading(true)
     setError(null)
     try {
@@ -522,7 +536,7 @@ export function StarsChartApp() {
                       value={c.value}
                       aria-label={c.name}
                       title={c.name}
-                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
+                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform motion-safe:hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
                       style={{ backgroundColor: c.value }}
                     >
                       <Check className="size-3.5 text-white opacity-0 mix-blend-difference transition-opacity duration-150 group-data-[pressed]/toggle:opacity-100" />
