@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-image"
 import { decodeShareConfig } from "@/lib/share-config"
-import { getMetadataBase, getOriginFromHeaders } from "@/lib/site-url"
+import { getRequestOrigin } from "@/lib/site-url"
 
 export const runtime = "nodejs"
 
@@ -15,7 +15,7 @@ function getSharePath(config: string): string {
 }
 
 async function getShareMetadataBase(): Promise<URL> {
-  return getOriginFromHeaders(await headers()) ?? getMetadataBase()
+  return getRequestOrigin(await headers())
 }
 
 export async function generateMetadata({

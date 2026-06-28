@@ -1,51 +1,70 @@
-/** Resolve the public site origin from env (Vercel + optional override). */
-export function getConfiguredSiteUrl(): URL | null {
-  const configuredUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
-    process.env.VERCEL_URL
-
-  if (!configuredUrl?.trim()) {
-    return null
-  }
-
-  const normalized = configuredUrl.trim()
-  const withProtocol =
-    normalized.startsWith("http://") || normalized.startsWith("https://")
-      ? normalized
-      : `https://${normalized}`
-
-  try {
-    return new URL(withProtocol)
-  } catch {
-    return null
-  }
-}
-
-/** Site origin for metadata and absolute URLs; localhost in local dev. */
-export function getMetadataBase(): URL {
-  return getConfiguredSiteUrl() ?? new URL(`http://localhost:${process.env.PORT ?? "3000"}`)
-}
-
 function firstHeaderValue(value: string | null): string | null {
   return value?.split(",")[0]?.trim() || null
 }
 
-/** Prefer the incoming request host (custom domain, preview, localhost). */
-export function getOriginFromHeaders(requestHeaders: Headers): URL | null {
+function isVercelDeployment(): boolean {
+  return process.env.VERCEL === "1"
+}
+
+function requireEnv(name: "VERCEL_PROJECT_PRODUCTION_URL" | "VERCEL_URL"): string {
+  const value = process.env[name]?.trim()
+  if (!value) {
+    throw new Error(`${name} must be set on Vercel`)
+  }
+  return value
+}
+
+function vercelHostToUrl(host: string): URL {
+  return new URL(`https://${host}`)
+}
+
+/**
+ * Site origin for static metadata (e.g. root layout at build time).
+ *
+ * Vercel system variables (https://vercel.com/docs/environment-variables/system-environment-variables):
+ * - production  → VERCEL_PROJECT_PRODUCTION_URL (custom domain or *.vercel.app)
+ * - preview     → VERCEL_URL (this deployment)
+ * - development → VERCEL_URL (vercel dev)
+ * - local pnpm dev → http://localhost:${PORT}
+ */
+export function getMetadataBase(): URL {
+  if (!isVercelDeployment()) {
+    return new URL(`http://localhost:${process.env.PORT ?? "3000"}`)
+  }
+
+  switch (process.env.VERCEL_ENV) {
+    case "production":
+      return vercelHostToUrl(requireEnv("VERCEL_PROJECT_PRODUCTION_URL"))
+    case "preview":
+    case "development":
+      return vercelHostToUrl(requireEnv("VERCEL_URL"))
+    default:
+      throw new Error(`Unsupported VERCEL_ENV: ${process.env.VERCEL_ENV ?? "(unset)"}`)
+  }
+}
+
+/**
+ * Site origin for a live request (share pages, canonical/OG URLs).
+ * Uses the incoming Host / X-Forwarded-* headers, which reflect the domain
+ * the user is actually visiting.
+ */
+export function getRequestOrigin(requestHeaders: Headers): URL {
   const host =
     firstHeaderValue(requestHeaders.get("x-forwarded-host")) ??
     firstHeaderValue(requestHeaders.get("host"))
-  if (!host) return null
 
-  const protocol =
-    firstHeaderValue(requestHeaders.get("x-forwarded-proto")) ??
-    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : null)
-  if (!protocol) return null
-
-  try {
-    return new URL(`${protocol}://${host}`)
-  } catch {
-    return null
+  if (!host) {
+    throw new Error("Missing Host header")
   }
+
+  if (!isVercelDeployment()) {
+    return new URL(`http://${host}`)
+  }
+
+  const protocol = firstHeaderValue(requestHeaders.get("x-forwarded-proto"))
+  if (!protocol) {
+    throw new Error("Missing x-forwarded-proto header on Vercel")
+  }
+
+  return new URL(`${protocol}://${host}`)
 }
