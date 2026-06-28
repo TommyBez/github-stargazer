@@ -17,8 +17,8 @@ export const OG_SIZE = { width: OG_W, height: OG_H }
 export const OG_CONTENT_TYPE = "image/png"
 
 // Characters that may appear in the OG image. Used to subset the embedded font.
-const FONT_TEXT =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-—/:_kStarHistoryNotFound"
+const FONT_TEXT_BASE =
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-—/:_&★kStarHistoryNotFound"
 
 async function loadGoogleFont(family: string, weight: number, text: string): Promise<ArrayBuffer | null> {
   try {
@@ -146,11 +146,12 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
     hand: "Caveat",
   }
   const fontName = FONT_FAMILY[fontKey] ?? "Inter"
+  const fontText = `${FONT_TEXT_BASE}${repoParam}${title ?? ""}`
 
   const [regular, bold, heavy] = await Promise.all([
-    loadGoogleFont(fontName, 400, FONT_TEXT),
-    loadGoogleFont(fontName, 700, FONT_TEXT),
-    titleWeight === 800 ? loadGoogleFont(fontName, 800, FONT_TEXT) : Promise.resolve(null),
+    loadGoogleFont(fontName, 400, fontText),
+    loadGoogleFont(fontName, 700, fontText),
+    titleWeight === 800 ? loadGoogleFont(fontName, 800, fontText) : Promise.resolve(null),
   ])
   const fonts = [
     ...(regular ? [{ name: fontName, data: regular, weight: 400 as const, style: "normal" as const }] : []),
