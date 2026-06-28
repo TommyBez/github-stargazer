@@ -16,6 +16,19 @@ export const OG_H = 630
 export const OG_SIZE = { width: OG_W, height: OG_H }
 export const OG_CONTENT_TYPE = "image/png"
 
+// Social crawlers (X/Twitter, Slack, Discord, …) fetch the preview image on
+// demand and only display it if the fetch is fast and cacheable. The Next.js
+// default for a dynamic image route is `max-age=0, must-revalidate`, which
+// forces a revalidation on every single fetch — on a cold serverless function
+// that round-trip can exceed a crawler's display budget, leaving a blank card.
+// Serving a successfully rendered chart with a real positive TTL (plus a long
+// CDN `s-maxage` and `stale-while-revalidate`) lets the CDN and the crawler
+// serve a cached copy instantly, which is what makes the preview reliable.
+const SUCCESS_CACHE_CONTROL = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800"
+// Error fallbacks must recover quickly (e.g. once a transient GitHub rate-limit
+// clears), so they are only cached briefly.
+const FALLBACK_CACHE_CONTROL = "public, max-age=60"
+
 // Characters that may appear in the OG image. Used to subset the embedded font.
 const FONT_TEXT_BASE =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-—/:_&★kStarHistoryNotFound"
@@ -284,7 +297,12 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
           </div>
         ))}
       </div>,
-      { width: OG_W, height: OG_H, fonts: fonts.length ? fonts : undefined },
+      {
+        width: OG_W,
+        height: OG_H,
+        fonts: fonts.length ? fonts : undefined,
+        headers: { "Cache-Control": SUCCESS_CACHE_CONTROL },
+      },
     )
   } catch (err) {
     const isNoRepo = !parsed
@@ -319,7 +337,12 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
             : fallbackMessage}
         </div>
       </div>,
-      { width: OG_W, height: OG_H, fonts: fonts.length ? fonts : undefined },
+      {
+        width: OG_W,
+        height: OG_H,
+        fonts: fonts.length ? fonts : undefined,
+        headers: { "Cache-Control": FALLBACK_CACHE_CONTROL },
+      },
     )
   }
 }
