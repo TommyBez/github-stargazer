@@ -305,7 +305,7 @@ export function StarsChartApp() {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="chart-style">Style</Label>
-              <Select value={styleName} onValueChange={setStyleName}>
+              <Select value={styleName} onValueChange={(v) => v && setStyleName(v)}>
                 <SelectTrigger id="chart-style">
                   <SelectValue />
                 </SelectTrigger>
@@ -404,7 +404,7 @@ export function StarsChartApp() {
                 max={5}
                 step={0.5}
                 value={[style.lineWidth]}
-                onValueChange={(v) => updateStyle({ lineWidth: v[0] })}
+                onValueChange={(v) => updateStyle({ lineWidth: Array.isArray(v) ? v[0] : v })}
               />
             </div>
 
