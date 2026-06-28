@@ -1,7 +1,7 @@
 "use client"
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
-import { Star, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert, X, ArrowRight } from "lucide-react"
+import { Star, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,9 +31,6 @@ const PREVIEW_H = 500
 const CLIPBOARD_API_TIMEOUT_MS = 700
 const COPY_FEEDBACK_MS = 4000
 const DOWNLOAD_FEEDBACK_MS = 2200
-
-// One-click starting points so the primary action never faces a blank input.
-const EXAMPLE_REPOS = ["vercel/next.js", "facebook/react", "shadcn-ui/ui", "tailwindlabs/tailwindcss"]
 
 const LINE_COLORS = [
   { name: "Star Gold", value: "#facc15" },
@@ -284,11 +281,6 @@ export function StarsChartApp() {
     runGenerate(repoInput)
   }
 
-  function handlePickExample(repo: string) {
-    setRepoInput(repo)
-    runGenerate(repo)
-  }
-
   function handleClearInput() {
     setRepoInput("")
     inputRef.current?.focus()
@@ -411,9 +403,7 @@ export function StarsChartApp() {
         </div>
       )}
 
-      {!data && !loading && !error && (
-        <EmptyState onPick={handlePickExample} />
-      )}
+      {!data && !loading && !error && <EmptyState />}
 
       {loading && !data && <ChartSkeleton />}
 
@@ -657,7 +647,9 @@ export function StarsChartApp() {
                 ) : (
                   <Link2 className="size-4" />
                 )}
-                {copying ? "Copying link" : copied ? "Copied to clipboard" : copyError ? "Copy failed" : "Copy shareable link"}
+                {/* Label stays constant; the icon + the status line above carry the
+                    copying/copied/error feedback, so the button never resizes. */}
+                Copy shareable link
               </Button>
               <a
                 href={shareUrl}
@@ -675,7 +667,7 @@ export function StarsChartApp() {
   )
 }
 
-function EmptyState({ onPick }: { onPick: (repo: string) => void }) {
+function EmptyState() {
   return (
     <Card className="flex flex-col items-center gap-4 p-10 text-center duration-300 animate-in fade-in sm:p-16">
       <span className="flex size-12 items-center justify-center rounded-lg bg-star-soft">
@@ -689,24 +681,6 @@ function EmptyState({ onPick }: { onPick: (repo: string) => void }) {
           Type any public GitHub repo above, like <span className="font-mono text-foreground">owner/repo</span>,
           then customize and share the chart.
         </p>
-      </div>
-      <div className="flex flex-col items-center gap-2.5">
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
-          Or try one
-        </span>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {EXAMPLE_REPOS.map((repo) => (
-            <button
-              key={repo}
-              type="button"
-              onClick={() => onPick(repo)}
-              className="group/chip inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition-all hover:border-foreground/20 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:translate-y-px"
-            >
-              {repo}
-              <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all duration-200 group-hover/chip:translate-x-0 group-hover/chip:opacity-100" />
-            </button>
-          ))}
-        </div>
       </div>
     </Card>
   )
