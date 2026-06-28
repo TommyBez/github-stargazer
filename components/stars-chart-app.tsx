@@ -78,7 +78,6 @@ export function StarsChartApp() {
   const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
 
   const [copied, setCopied] = useState(false)
-  const [copiedImage, setCopiedImage] = useState(false)
 
   async function handleCopyShare() {
     if (!shareUrl) return
@@ -86,14 +85,6 @@ export function StarsChartApp() {
     await navigator.clipboard.writeText(absolute)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  async function handleCopyImage() {
-    if (!imageUrl) return
-    const absolute = `${window.location.origin}${imageUrl}`
-    await navigator.clipboard.writeText(absolute)
-    setCopiedImage(true)
-    setTimeout(() => setCopiedImage(false), 2000)
   }
 
   const resolvedTitle = useMemo(() => {
@@ -189,25 +180,6 @@ export function StarsChartApp() {
   }
 
   const shareUrl = useMemo(() => {
-    if (!activeRepo) return ""
-    const params = new URLSearchParams({
-      repo: activeRepo,
-      theme,
-      color: lineColor,
-      curve: style.curve,
-      lw: String(style.lineWidth),
-      grid: style.grid,
-      area: showArea ? style.areaFill : "none",
-      glow: style.glow ? "1" : "0",
-      font,
-      spacing: namedStyle.spacing,
-      style: namedStyle.name,
-    })
-    if (title.trim()) params.set("title", title.trim())
-    return `/share?${params.toString()}`
-  }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
-
-  const imageUrl = useMemo(() => {
     if (!activeRepo) return ""
     const params = new URLSearchParams({
       repo: activeRepo,
@@ -456,11 +428,11 @@ export function StarsChartApp() {
             <div className="flex flex-col gap-2 border-t border-border pt-5">
               <Label>Share on social</Label>
               <p className="text-xs text-muted-foreground">
-                Copy the link and paste it on X, LinkedIn, or anywhere else.
+                A direct image link showing just the chart. Paste it on X, Slack, or anywhere else.
               </p>
               <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start">
                 {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
-                {copied ? "Copied to clipboard" : "Copy shareable link"}
+                {copied ? "Copied to clipboard" : "Copy image link"}
               </Button>
               <a
                 href={shareUrl}
@@ -468,7 +440,7 @@ export function StarsChartApp() {
                 rel="noreferrer"
                 className="text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
-                Open share page
+                Open image
               </a>
             </div>
           </Card>
