@@ -186,3 +186,18 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Honor the OS "reduce motion" setting: collapse the duration of entrance
+   animations and transitions so they resolve instantly instead of sweeping.
+   Transform-based affordances (e.g. hover scale) are gated separately with
+   `motion-safe:` at the component level. No colors, type, or layout change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

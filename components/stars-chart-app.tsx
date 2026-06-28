@@ -1,7 +1,7 @@
 "use client"
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
-import { Star, Download, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert } from "lucide-react"
+import { Star, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +30,7 @@ const PREVIEW_W = 1000
 const PREVIEW_H = 500
 const CLIPBOARD_API_TIMEOUT_MS = 700
 const COPY_FEEDBACK_MS = 4000
+const DOWNLOAD_FEEDBACK_MS = 2200
 
 const LINE_COLORS = [
   { name: "Star Gold", value: "#facc15" },
@@ -63,12 +64,67 @@ const AREA_OPTIONS: { value: AreaFill; label: string }[] = [
   { value: "solid", label: "Solid" },
 ]
 
+/** Tracks the OS "reduce motion" preference so JS-driven motion can opt out too. */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const sync = () => setReduced(mq.matches)
+    sync()
+    mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
+  return reduced
+}
+
+/** Eases a number toward `target` for a quick count-up on the star total. */
+function useCountUp(target: number, durationMs = 900) {
+  const reduced = usePrefersReducedMotion()
+  const [value, setValue] = useState(target)
+  const fromRef = useRef(target)
+
+  useEffect(() => {
+    if (reduced) {
+      setValue(target)
+      fromRef.current = target
+      return
+    }
+    const from = fromRef.current
+    if (from === target) return
+    let raf = 0
+    let latest = from
+    let startTs: number | null = null
+    const tick = (ts: number) => {
+      if (startTs === null) startTs = ts
+      const t = Math.min(1, (ts - startTs) / durationMs)
+      const eased = 1 - Math.pow(1 - t, 3)
+      latest = Math.round(from + (target - from) * eased)
+      setValue(latest)
+      if (t < 1) {
+        raf = requestAnimationFrame(tick)
+      } else {
+        fromRef.current = target
+      }
+    }
+    raf = requestAnimationFrame(tick)
+    // If interrupted mid-flight (target changed), resume from the value on
+    // screen instead of snapping back to this run's start.
+    return () => {
+      cancelAnimationFrame(raf)
+      fromRef.current = latest
+    }
+  }, [target, durationMs, reduced])
+
+  return value
+}
+
 export function StarsChartApp() {
   const [repoInput, setRepoInput] = useState("")
   const [activeRepo, setActiveRepo] = useState("")
   const [data, setData] = useState<RepoStarData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
   // Customization
   const [title, setTitle] = useState("")
@@ -103,13 +159,30 @@ export function StarsChartApp() {
   const copyResetTimer = useRef<number | null>(null)
   const copyButtonRef = useRef<HTMLButtonElement | null>(null)
 
+  const [downloaded, setDownloaded] = useState<"png" | "svg" | null>(null)
+  const downloadResetTimer = useRef<number | null>(null)
+
   useEffect(() => {
     return () => {
       if (copyResetTimer.current !== null) {
         window.clearTimeout(copyResetTimer.current)
       }
+      if (downloadResetTimer.current !== null) {
+        window.clearTimeout(downloadResetTimer.current)
+      }
     }
   }, [])
+
+  function flagDownloaded(kind: "png" | "svg") {
+    setDownloaded(kind)
+    if (downloadResetTimer.current !== null) {
+      window.clearTimeout(downloadResetTimer.current)
+    }
+    downloadResetTimer.current = window.setTimeout(() => {
+      setDownloaded(null)
+      downloadResetTimer.current = null
+    }, DOWNLOAD_FEEDBACK_MS)
+  }
 
   async function handleCopyShare() {
     if (!shareUrl) return
@@ -157,6 +230,16 @@ export function StarsChartApp() {
   const deferredNamedStyle = useDeferredValue(namedStyle)
   const deferredTitle = useDeferredValue(resolvedTitle)
 
+  // True while the deferred (rendered) chart lags the live controls — used to
+  // gently dim the preview so a customization tweak always registers visually.
+  const previewPending =
+    deferredStyle !== style ||
+    deferredLineColor !== lineColor ||
+    deferredShowArea !== showArea ||
+    deferredTheme !== theme ||
+    deferredNamedStyle !== namedStyle ||
+    deferredTitle !== resolvedTitle
+
   const svg = useMemo(() => {
     if (!data) return ""
     return buildChartSvg(data.history, {
@@ -175,10 +258,18 @@ export function StarsChartApp() {
     })
   }, [data, deferredTitle, deferredLineColor, deferredShowArea, deferredTheme, deferredStyle, deferredNamedStyle])
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault()
-    const value = repoInput.trim()
-    if (!value) return
+  const animatedStars = useCountUp(data?.totalStars ?? 0)
+
+  async function runGenerate(rawValue: string) {
+    const value = rawValue.trim()
+    if (!value || loading) return
+    // Clear any lingering "Saved PNG/SVG" feedback so it can't bleed onto the
+    // next chart before that artifact has actually been downloaded.
+    if (downloadResetTimer.current !== null) {
+      window.clearTimeout(downloadResetTimer.current)
+      downloadResetTimer.current = null
+    }
+    setDownloaded(null)
     setLoading(true)
     setError(null)
     try {
@@ -199,6 +290,16 @@ export function StarsChartApp() {
     }
   }
 
+  function handleGenerate(e: React.FormEvent) {
+    e.preventDefault()
+    runGenerate(repoInput)
+  }
+
+  function handleClearInput() {
+    setRepoInput("")
+    inputRef.current?.focus()
+  }
+
   function downloadBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -213,6 +314,7 @@ export function StarsChartApp() {
   function handleDownloadSvg() {
     if (!svg || !data) return
     downloadBlob(new Blob([svg], { type: "image/svg+xml" }), `${data.name}-stars.svg`)
+    flagDownloaded("svg")
   }
 
   function handleDownloadPng() {
@@ -230,7 +332,10 @@ export function StarsChartApp() {
       ctx.scale(scale, scale)
       ctx.drawImage(img, 0, 0, PREVIEW_W, PREVIEW_H)
       canvas.toBlob((blob) => {
-        if (blob) downloadBlob(blob, `${data.name}-stars.png`)
+        if (blob) {
+          downloadBlob(blob, `${data.name}-stars.png`)
+          flagDownloaded("png")
+        }
       }, "image/png")
     }
     img.src = dataUri
@@ -255,6 +360,8 @@ export function StarsChartApp() {
     return `/share/${encodeShareConfig(params.toString())}`
   }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
+  const trimmedInput = repoInput.trim()
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       {/* Search */}
@@ -262,14 +369,33 @@ export function StarsChartApp() {
         <div className="relative flex-1">
           <Star className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={inputRef}
             value={repoInput}
             onChange={(e) => setRepoInput(e.target.value)}
             placeholder="owner/repo  or  https://github.com/owner/repo"
-            className="h-11 pl-9 font-mono text-sm"
+            className="h-11 pl-9 pr-10 font-mono text-sm"
             aria-label="GitHub repository"
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
+          {repoInput && (
+            <button
+              type="button"
+              onClick={handleClearInput}
+              aria-label="Clear repository"
+              className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
-        <Button type="submit" disabled={loading} className="h-11 px-6">
+        <Button
+          type="submit"
+          disabled={loading || !trimmedInput}
+          className="h-11 px-6 sm:min-w-[150px]"
+        >
           {loading ? (
             <>
               <LoaderCircle className="size-4 animate-spin" />
@@ -284,40 +410,58 @@ export function StarsChartApp() {
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive duration-300 animate-in fade-in slide-in-from-top-1"
         >
           <TriangleAlert className="size-4 shrink-0" />
           {error}
         </div>
       )}
 
-      {!data && !error && <EmptyState />}
+      {!data && !loading && !error && <EmptyState />}
+
+      {loading && !data && <ChartSkeleton />}
 
       {data && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-6 duration-500 animate-in fade-in slide-in-from-bottom-2 lg:grid-cols-[1fr_320px]">
           {/* Chart preview + downloads */}
           <div className="flex flex-col gap-4">
-            <Card className="overflow-hidden p-0">
+            <Card className="relative overflow-hidden p-0">
               <div
-                className="w-full [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
+                className={`w-full transition-opacity duration-200 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full ${
+                  previewPending ? "opacity-60" : "opacity-100"
+                }`}
                 // The SVG is generated by our own trusted builder.
                 dangerouslySetInnerHTML={{ __html: svg }}
                 aria-label={`Star history chart for ${data.fullName}`}
                 role="img"
               />
+              {/* Dimmed overlay while re-fetching a different repo. */}
+              {loading && (
+                <div className="absolute inset-0 grid place-items-center bg-card/60 backdrop-blur-[1px] duration-200 animate-in fade-in">
+                  <LoaderCircle className="size-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </Card>
             <div className="flex flex-wrap items-center gap-3">
               <Button onClick={handleDownloadPng} variant="default">
-                <ImageDown className="size-4" />
-                Download PNG
+                {downloaded === "png" ? (
+                  <Check className="size-4 text-emerald-400" />
+                ) : (
+                  <ImageDown className="size-4" />
+                )}
+                {downloaded === "png" ? "Saved PNG" : "Download PNG"}
               </Button>
               <Button onClick={handleDownloadSvg} variant="secondary">
-                <FileDown className="size-4" />
-                Download SVG
+                {downloaded === "svg" ? (
+                  <Check className="size-4 text-emerald-500" />
+                ) : (
+                  <FileDown className="size-4" />
+                )}
+                {downloaded === "svg" ? "Saved SVG" : "Download SVG"}
               </Button>
               <div className="ml-auto flex items-center gap-1.5 font-mono text-sm text-foreground">
                 <Star className="size-4 fill-star text-star" />
-                <span className="tabular-nums">{data.totalStars.toLocaleString()}</span>
+                <span className="tabular-nums">{animatedStars.toLocaleString()}</span>
                 <span className="text-muted-foreground">stars</span>
               </div>
             </div>
@@ -391,9 +535,12 @@ export function StarsChartApp() {
                       key={c.value}
                       value={c.value}
                       aria-label={c.name}
-                      className="size-7 rounded-full border-2 border-transparent p-0 transition-transform hover:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
+                      title={c.name}
+                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform motion-safe:hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
                       style={{ backgroundColor: c.value }}
-                    />
+                    >
+                      <Check className="size-3.5 text-white opacity-0 mix-blend-difference transition-opacity duration-150 group-data-[pressed]/toggle:opacity-100" />
+                    </ToggleGroupItem>
                   ))}
                 </ToggleGroup>
                 <div className="mx-1 h-7 w-px bg-border" aria-hidden="true" />
@@ -425,7 +572,7 @@ export function StarsChartApp() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="chart-lw">Line width</Label>
-                <span className="text-xs text-muted-foreground">{style.lineWidth.toFixed(1)}px</span>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">{style.lineWidth.toFixed(1)}px</span>
               </div>
               <Slider
                 id="chart-lw"
@@ -459,7 +606,7 @@ export function StarsChartApp() {
             </div>
 
             {showArea && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 duration-200 animate-in fade-in slide-in-from-top-1">
                 <Label htmlFor="chart-area">Area style</Label>
                 <Select value={style.areaFill} onValueChange={(v) => updateStyle({ areaFill: v as AreaFill })}>
                   <SelectTrigger id="chart-area">
@@ -484,19 +631,19 @@ export function StarsChartApp() {
             {/* Social share */}
             <div className="flex flex-col gap-2 border-t border-border pt-5">
               <Label>Share on social</Label>
-              <p
-                role="status"
-                aria-live="polite"
-                className={`text-xs ${copyError ? "text-destructive" : "text-muted-foreground"}`}
-              >
+              {/* Keep the description constant on the success path so the panel
+                  never reflows — the button's check icon is the visible
+                  confirmation, and the live region below announces it for screen
+                  readers. The error message stays visible because it's rare and
+                  the user has to act on it. */}
+              <p className={`text-xs ${copyError ? "text-destructive" : "text-muted-foreground"}`}>
                 {copyError
                   ? "Clipboard access was blocked. Open the preview, then copy the URL from the address bar."
-                  : copying
-                    ? "Copying share link..."
-                  : copied
-                    ? "Share link copied."
-                    : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
+                  : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
               </p>
+              <span role="status" aria-live="polite" className="sr-only">
+                {copying ? "Copying share link…" : copied ? "Share link copied." : copyError ? "Copy failed." : ""}
+              </span>
               <Button
                 ref={copyButtonRef}
                 onClick={handleCopyShare}
@@ -514,7 +661,9 @@ export function StarsChartApp() {
                 ) : (
                   <Link2 className="size-4" />
                 )}
-                {copying ? "Copying link" : copied ? "Copied to clipboard" : copyError ? "Copy failed" : "Copy shareable link"}
+                {/* Label stays constant; the icon + the status line above carry the
+                    copying/copied/error feedback, so the button never resizes. */}
+                Copy shareable link
               </Button>
               <a
                 href={shareUrl}
@@ -534,7 +683,7 @@ export function StarsChartApp() {
 
 function EmptyState() {
   return (
-    <Card className="flex flex-col items-center gap-4 p-10 text-center sm:p-16">
+    <Card className="flex flex-col items-center gap-4 p-10 text-center duration-300 animate-in fade-in sm:p-16">
       <span className="flex size-12 items-center justify-center rounded-lg bg-star-soft">
         <Star className="size-5 fill-star text-star" />
       </span>
@@ -548,6 +697,39 @@ function EmptyState() {
         </p>
       </div>
     </Card>
+  )
+}
+
+/** Layout-matched placeholder so the jump from "nothing" to chart is smooth. */
+function ChartSkeleton() {
+  return (
+    <div
+      className="grid gap-6 duration-300 animate-in fade-in lg:grid-cols-[1fr_320px]"
+      aria-hidden="true"
+    >
+      <div className="flex flex-col gap-4">
+        <Card className="overflow-hidden p-0">
+          <div className="aspect-[2/1] w-full animate-pulse bg-muted" />
+        </Card>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="h-8 w-36 animate-pulse rounded-lg bg-muted" />
+          <div className="h-8 w-32 animate-pulse rounded-lg bg-muted" />
+          <div className="ml-auto h-5 w-24 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+      <Card className="flex h-fit flex-col gap-5 p-5">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-14 animate-pulse rounded bg-muted" />
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+            <div className="h-8 w-full animate-pulse rounded-lg bg-muted" />
+          </div>
+        ))}
+      </Card>
+    </div>
   )
 }
 

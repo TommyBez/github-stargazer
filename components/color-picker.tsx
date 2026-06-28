@@ -150,7 +150,7 @@ export function ColorPicker({ value, onChange, className, "aria-label": ariaLabe
       <PopoverTrigger
         aria-label={ariaLabel ?? "Open color picker"}
         className={cn(
-          "relative size-7 overflow-hidden rounded-full border border-border shadow-sm outline-none ring-offset-background transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "relative size-7 overflow-hidden rounded-full border border-border shadow-sm outline-none ring-offset-background transition-transform motion-safe:hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           className,
         )}
         style={{
