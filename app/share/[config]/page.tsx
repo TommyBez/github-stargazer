@@ -39,7 +39,8 @@ function getOriginFromHeaders(requestHeaders: Headers): URL | null {
 
   const protocol =
     firstHeaderValue(requestHeaders.get("x-forwarded-proto")) ??
-    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https")
+    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : null)
+  if (!protocol) return null
 
   try {
     return new URL(`${protocol}://${host}`)
