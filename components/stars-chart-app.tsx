@@ -1,6 +1,6 @@
 "use client"
 
-import { useDeferredValue, useMemo, useState } from "react"
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
 import { Star, Download, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,7 @@ import type { RepoStarData } from "@/lib/github"
 
 const PREVIEW_W = 1000
 const PREVIEW_H = 500
+const COPY_FEEDBACK_MS = 2000
 
 const LINE_COLORS = [
   { name: "Star Gold", value: "#facc15" },
@@ -96,13 +97,33 @@ export function StarsChartApp() {
   }
 
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
+  const copyResetTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimer.current !== null) {
+        window.clearTimeout(copyResetTimer.current)
+      }
+    }
+  }, [])
 
   async function handleCopyShare() {
     if (!shareUrl) return
     const absolute = `${window.location.origin}${shareUrl}`
-    await navigator.clipboard.writeText(absolute)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    const didCopy = await copyTextToClipboard(absolute)
+
+    setCopied(didCopy)
+    setCopyError(!didCopy)
+
+    if (copyResetTimer.current !== null) {
+      window.clearTimeout(copyResetTimer.current)
+    }
+    copyResetTimer.current = window.setTimeout(() => {
+      setCopied(false)
+      setCopyError(false)
+      copyResetTimer.current = null
+    }, COPY_FEEDBACK_MS)
   }
 
   const resolvedTitle = useMemo(() => {
@@ -455,12 +476,26 @@ export function StarsChartApp() {
             {/* Social share */}
             <div className="flex flex-col gap-2 border-t border-border pt-5">
               <Label>Share on social</Label>
-              <p className="text-xs text-muted-foreground">
-                A shareable link that previews just the chart on X, WhatsApp, Slack, and more.
+              <p
+                role="status"
+                aria-live="polite"
+                className={`text-xs ${copyError ? "text-destructive" : "text-muted-foreground"}`}
+              >
+                {copyError
+                  ? "Clipboard access was blocked. Open the preview, then copy the URL from the address bar."
+                  : copied
+                    ? "Share link copied."
+                    : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
               </p>
               <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start">
-                {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
-                {copied ? "Copied to clipboard" : "Copy shareable link"}
+                {copied ? (
+                  <Check className="size-4 text-emerald-500" />
+                ) : copyError ? (
+                  <TriangleAlert className="size-4 text-destructive" />
+                ) : (
+                  <Link2 className="size-4" />
+                )}
+                {copied ? "Copied to clipboard" : copyError ? "Copy failed" : "Copy shareable link"}
               </Button>
               <a
                 href={shareUrl}
@@ -495,4 +530,44 @@ function EmptyState() {
       </div>
     </Card>
   )
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // Some browsers block Clipboard API writes in automation or strict contexts.
+  }
+
+  const textarea = document.createElement("textarea")
+  textarea.value = text
+  textarea.readOnly = true
+  textarea.style.position = "fixed"
+  textarea.style.left = "-9999px"
+  textarea.style.top = "0"
+
+  const selection = document.getSelection()
+  const selectedRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
+
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+
+  let didCopy = false
+  try {
+    didCopy = document.execCommand("copy")
+  } catch {
+    didCopy = false
+  } finally {
+    textarea.remove()
+    if (selection && selectedRange) {
+      selection.removeAllRanges()
+      selection.addRange(selectedRange)
+    }
+  }
+
+  return didCopy
 }
