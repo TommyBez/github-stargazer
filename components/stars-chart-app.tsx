@@ -107,7 +107,7 @@ export function StarsChartApp() {
   }, [styleName])
 
   const font = namedStyle.font
-  const spacing = namedStyle.spacing
+  const spacing = SPACING_CONFIGS[namedStyle.spacing]
 
   const svg = useMemo(() => {
     if (!data) return ""
