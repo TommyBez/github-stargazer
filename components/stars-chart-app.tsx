@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ColorPicker } from "@/components/color-picker"
+import { encodeShareConfig } from "@/lib/share-config"
 import {
   buildChartSvg,
   THEME_PRESETS,
@@ -195,7 +196,7 @@ export function StarsChartApp() {
       style: namedStyle.name,
     })
     if (title.trim()) params.set("title", title.trim())
-    return `/share?${params.toString()}`
+    return `/share/${encodeShareConfig(params.toString())}`
   }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
   return (
