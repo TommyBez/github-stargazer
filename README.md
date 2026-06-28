@@ -98,10 +98,6 @@ Custom SVG chart renderer (`lib/chart-svg.ts`).
 
 The app is designed for [Vercel](https://vercel.com/). Set `GITHUB_TOKEN` in the project environment variables for production rate limits. Site URLs for metadata and share pages are derived automatically from Vercel system variables (`VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_URL`).
 
-## License
-
-Not specified in this repository.
-
 <p align="center">
   <a href="https://github.com/TommyBez/github-stargazer">
     <img src="https://shieldcn.dev/chart/github/stars/TommyBez/github-stargazer.svg" alt="Star history" />
