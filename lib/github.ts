@@ -28,14 +28,10 @@ export class GitHubError extends Error {
   }
 }
 
-/** Resolve a GitHub token from the supported env vars, ignoring blank values. */
+/** Resolve `GITHUB_TOKEN` from the environment, ignoring blank values. */
 function getToken(): string | undefined {
-  const candidates = [process.env.GITHUB_TOKEN_2, process.env.GITHUB_TOKEN]
-  for (const c of candidates) {
-    const v = c?.trim()
-    if (v) return v
-  }
-  return undefined
+  const token = process.env.GITHUB_TOKEN?.trim()
+  return token || undefined
 }
 
 function headers(useToken: boolean) {
