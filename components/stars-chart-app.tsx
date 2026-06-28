@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 import { Star, Download, LoaderCircle, Link2, Check, ImageDown, FileDown, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -76,7 +76,24 @@ export function StarsChartApp() {
   // Font + spacing are driven together by the Style menu.
   const [styleName, setStyleName] = useState(STYLE_PRESETS[0].name)
   // Everything else is individually selectable.
-  const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
+  const [styleState, setStyleState] = useState<ChartStyle>(DEFAULT_STYLE)
+  // Merge over DEFAULT_STYLE while ignoring undefined values, so `style` can
+  // never be partial — a missing OR explicitly-undefined field always falls back
+  // to its default. Guards against stale Fast Refresh state and partial config.
+  const style = useMemo<ChartStyle>(() => {
+    const merged: ChartStyle = { ...DEFAULT_STYLE }
+    for (const key of Object.keys(DEFAULT_STYLE) as (keyof ChartStyle)[]) {
+      const value = styleState[key]
+      if (value !== undefined) {
+        ;(merged[key] as ChartStyle[keyof ChartStyle]) = value
+      }
+    }
+    return merged
+  }, [styleState])
+
+  function updateStyle(patch: Partial<ChartStyle>) {
+    setStyleState((prev) => ({ ...prev, ...patch }))
+  }
 
   const [copied, setCopied] = useState(false)
 
@@ -90,7 +107,7 @@ export function StarsChartApp() {
 
   const resolvedTitle = useMemo(() => {
     if (title.trim()) return title.trim()
-    if (data) return `Star history — ${data.repo}`
+    if (data) return `Star history — ${data.fullName}`
     return "Star history"
   }, [title, data])
 
@@ -99,25 +116,35 @@ export function StarsChartApp() {
   }, [styleName])
 
   const font = namedStyle.font
-  const spacing = SPACING_CONFIGS[namedStyle.spacing]
+
+  // Defer the inputs that feed the expensive SVG regeneration. This keeps the
+  // controls (slider drag, color picker) responsive: the thumb/label update
+  // immediately while the heavy chart re-render happens at a lower priority,
+  // so dragging the slider never loses pointer capture mid-interaction.
+  const deferredStyle = useDeferredValue(style)
+  const deferredLineColor = useDeferredValue(lineColor)
+  const deferredShowArea = useDeferredValue(showArea)
+  const deferredTheme = useDeferredValue(theme)
+  const deferredNamedStyle = useDeferredValue(namedStyle)
+  const deferredTitle = useDeferredValue(resolvedTitle)
 
   const svg = useMemo(() => {
     if (!data) return ""
     return buildChartSvg(data.history, {
-      title: resolvedTitle,
-      lineColor,
-      fillColor: lineColor,
-      showArea,
+      title: deferredTitle,
+      lineColor: deferredLineColor,
+      fillColor: deferredLineColor,
+      showArea: deferredShowArea,
       width: PREVIEW_W,
       height: PREVIEW_H,
-      font,
-      spacing,
-      typography: namedStyle.typography,
-      sketch: namedStyle.sketch,
-      ...THEME_PRESETS[theme],
-      ...style,
+      font: deferredNamedStyle.font,
+      spacing: SPACING_CONFIGS[deferredNamedStyle.spacing],
+      typography: deferredNamedStyle.typography,
+      sketch: deferredNamedStyle.sketch,
+      ...THEME_PRESETS[deferredTheme],
+      ...deferredStyle,
     })
-  }, [data, resolvedTitle, lineColor, showArea, theme, style, font, spacing, namedStyle])
+  }, [data, deferredTitle, deferredLineColor, deferredShowArea, deferredTheme, deferredStyle, deferredNamedStyle])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault()
