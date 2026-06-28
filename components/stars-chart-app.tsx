@@ -136,8 +136,8 @@ export function StarsChartApp() {
 
   const resolvedTitle = useMemo(() => {
     if (title.trim()) return title.trim()
-    if (data) return `Star history — ${data.fullName}`
-    return "Star history"
+    if (data) return data.fullName
+    return ""
   }, [title, data])
 
   const namedStyle = useMemo(() => {
