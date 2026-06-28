@@ -28,7 +28,8 @@ import type { RepoStarData } from "@/lib/github"
 
 const PREVIEW_W = 1000
 const PREVIEW_H = 500
-const COPY_FEEDBACK_MS = 2000
+const CLIPBOARD_API_TIMEOUT_MS = 700
+const COPY_FEEDBACK_MS = 4000
 
 const LINE_COLORS = [
   { name: "Star Gold", value: "#facc15" },
@@ -98,6 +99,7 @@ export function StarsChartApp() {
 
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState(false)
+  const [copying, setCopying] = useState(false)
   const copyResetTimer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -111,8 +113,12 @@ export function StarsChartApp() {
   async function handleCopyShare() {
     if (!shareUrl) return
     const absolute = `${window.location.origin}${shareUrl}`
+    setCopying(true)
+    setCopied(false)
+    setCopyError(false)
     const didCopy = await copyTextToClipboard(absolute)
 
+    setCopying(false)
     setCopied(didCopy)
     setCopyError(!didCopy)
 
@@ -483,19 +489,23 @@ export function StarsChartApp() {
               >
                 {copyError
                   ? "Clipboard access was blocked. Open the preview, then copy the URL from the address bar."
+                  : copying
+                    ? "Copying share link..."
                   : copied
                     ? "Share link copied."
                     : "A shareable link that previews just the chart on X, WhatsApp, Slack, and more."}
               </p>
-              <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start">
-                {copied ? (
+              <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start" disabled={copying}>
+                {copying ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : copied ? (
                   <Check className="size-4 text-emerald-500" />
                 ) : copyError ? (
                   <TriangleAlert className="size-4 text-destructive" />
                 ) : (
                   <Link2 className="size-4" />
                 )}
-                {copied ? "Copied to clipboard" : copyError ? "Copy failed" : "Copy shareable link"}
+                {copying ? "Copying link" : copied ? "Copied to clipboard" : copyError ? "Copy failed" : "Copy shareable link"}
               </Button>
               <a
                 href={shareUrl}
@@ -533,13 +543,11 @@ function EmptyState() {
 }
 
 async function copyTextToClipboard(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(text)
+  if (navigator.clipboard) {
+    const didCopy = await copyWithClipboardApi(text)
+    if (didCopy) {
       return true
     }
-  } catch {
-    // Some browsers block Clipboard API writes in automation or strict contexts.
   }
 
   const textarea = document.createElement("textarea")
@@ -570,4 +578,24 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
   }
 
   return didCopy
+}
+
+async function copyWithClipboardApi(text: string): Promise<boolean> {
+  let timeoutId: number | null = null
+
+  try {
+    const clipboardWrite = navigator.clipboard.writeText(text).then(
+      () => true,
+      () => false,
+    )
+    const timeout = new Promise<boolean>((resolve) => {
+      timeoutId = window.setTimeout(() => resolve(false), CLIPBOARD_API_TIMEOUT_MS)
+    })
+
+    return await Promise.race([clipboardWrite, timeout])
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId)
+    }
+  }
 }
