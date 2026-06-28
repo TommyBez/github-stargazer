@@ -76,10 +76,13 @@ export function StarsChartApp() {
   // Font + spacing are driven together by the Style menu.
   const [styleName, setStyleName] = useState(STYLE_PRESETS[0].name)
   // Everything else is individually selectable.
-  const [style, setStyle] = useState<ChartStyle>(DEFAULT_STYLE)
+  const [styleState, setStyleState] = useState<ChartStyle>(DEFAULT_STYLE)
+  // Always merge over DEFAULT_STYLE so `style` can never be partial (guards
+  // against stale Fast Refresh state or partial hydration from a shared config).
+  const style = useMemo<ChartStyle>(() => ({ ...DEFAULT_STYLE, ...styleState }), [styleState])
 
   function updateStyle(patch: Partial<ChartStyle>) {
-    setStyle((prev) => ({ ...prev, ...patch }))
+    setStyleState((prev) => ({ ...prev, ...patch }))
   }
 
   const [copied, setCopied] = useState(false)
