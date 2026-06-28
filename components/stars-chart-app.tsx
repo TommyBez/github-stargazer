@@ -195,7 +195,7 @@ export function StarsChartApp() {
       style: namedStyle.name,
     })
     if (title.trim()) params.set("title", title.trim())
-    return `/api/og?${params.toString()}`
+    return `/share?${params.toString()}`
   }, [activeRepo, theme, lineColor, title, style, showArea, font, namedStyle])
 
   return (
@@ -428,11 +428,11 @@ export function StarsChartApp() {
             <div className="flex flex-col gap-2 border-t border-border pt-5">
               <Label>Share on social</Label>
               <p className="text-xs text-muted-foreground">
-                A direct image link showing just the chart. Paste it on X, Slack, or anywhere else.
+                A shareable link that previews just the chart on X, WhatsApp, Slack, and more.
               </p>
               <Button onClick={handleCopyShare} variant="outline" size="sm" className="justify-start">
                 {copied ? <Check className="size-4 text-emerald-500" /> : <Link2 className="size-4" />}
-                {copied ? "Copied to clipboard" : "Copy image link"}
+                {copied ? "Copied to clipboard" : "Copy shareable link"}
               </Button>
               <a
                 href={shareUrl}
@@ -440,7 +440,7 @@ export function StarsChartApp() {
                 rel="noreferrer"
                 className="text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
-                Open image
+                Open preview
               </a>
             </div>
           </Card>
