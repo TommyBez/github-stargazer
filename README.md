@@ -1,10 +1,18 @@
-# Stargazer
+<p align="center">
+  <img src="https://shieldcn.dev/header/gradient.svg?title=Stargazer&subtitle=Beautiful%20GitHub%20star-history%20charts&logo=github&theme=zinc" alt="Stargazer" />
+</p>
+
+<p align="center">
+  <a href="https://github-stargazer.vercel.app"><img src="https://shieldcn.dev/badge/demo-live-brightgreen.svg?variant=secondary" alt="Live demo" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/stargazers"><img src="https://shieldcn.dev/github/stars/TommyBez/github-stargazer.svg?variant=secondary" alt="GitHub stars" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/network/members"><img src="https://shieldcn.dev/github/forks/TommyBez/github-stargazer.svg?variant=secondary" alt="GitHub forks" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/commits/main"><img src="https://shieldcn.dev/github/last-commit/TommyBez/github-stargazer.svg?variant=secondary" alt="Last commit" /></a>
+  <a href="https://github.com/TommyBez/github-stargazer/graphs/contributors"><img src="https://shieldcn.dev/github/contributors/TommyBez/github-stargazer.svg?variant=secondary" alt="Contributors" /></a>
+</p>
 
 Generate beautiful, shareable star-history charts for any public GitHub repository.
 
 Paste a repo, customize the look, and download a chart image built for social posts — or copy a share link with Open Graph / Twitter card previews.
-
-**[Try it live →](https://github-stargazer.vercel.app)** · **[View source on GitHub →](https://github.com/TommyBez/github-stargazer)**
 
 ## Features
 
@@ -75,11 +83,16 @@ lib/
 
 ## Tech stack
 
-- [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
-- [React 19](https://react.dev/)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- Custom SVG chart renderer (`lib/chart-svg.ts`)
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://shieldcn.dev/badge/Next.js-16-000000.svg?logo=nextdotjs&split=true&variant=secondary" alt="Next.js" /></a>
+  <a href="https://react.dev/"><img src="https://shieldcn.dev/badge/React-19-61DAFB.svg?logo=react&split=true&labelColor=20232A&color=61DAFB" alt="React" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://shieldcn.dev/badge/Tailwind-4-38BDF8.svg?logo=tailwindcss&split=true" alt="Tailwind CSS" /></a>
+  <a href="https://ui.shadcn.com/"><img src="https://shieldcn.dev/badge/shadcn/ui-black.svg?logo=shadcnui&split=true" alt="shadcn/ui" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://shieldcn.dev/badge/TypeScript-5.7-3178C6.svg?logo=typescript&split=true" alt="TypeScript" /></a>
+  <a href="https://vercel.com/"><img src="https://shieldcn.dev/badge/Vercel-deployed-000000.svg?logo=vercel&split=true" alt="Vercel" /></a>
+</p>
+
+Custom SVG chart renderer (`lib/chart-svg.ts`).
 
 ## Deployment
 
@@ -88,3 +101,9 @@ The app is designed for [Vercel](https://vercel.com/). Set `GITHUB_TOKEN` in the
 ## License
 
 Not specified in this repository.
+
+<p align="center">
+  <a href="https://github.com/TommyBez/github-stargazer">
+    <img src="https://shieldcn.dev/chart/github/stars/TommyBez/github-stargazer.svg" alt="Star history" />
+  </a>
+</p>
