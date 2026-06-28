@@ -77,9 +77,19 @@ export function StarsChartApp() {
   const [styleName, setStyleName] = useState(STYLE_PRESETS[0].name)
   // Everything else is individually selectable.
   const [styleState, setStyleState] = useState<ChartStyle>(DEFAULT_STYLE)
-  // Always merge over DEFAULT_STYLE so `style` can never be partial (guards
-  // against stale Fast Refresh state or partial hydration from a shared config).
-  const style = useMemo<ChartStyle>(() => ({ ...DEFAULT_STYLE, ...styleState }), [styleState])
+  // Merge over DEFAULT_STYLE while ignoring undefined values, so `style` can
+  // never be partial — a missing OR explicitly-undefined field always falls back
+  // to its default. Guards against stale Fast Refresh state and partial config.
+  const style = useMemo<ChartStyle>(() => {
+    const merged: ChartStyle = { ...DEFAULT_STYLE }
+    for (const key of Object.keys(DEFAULT_STYLE) as (keyof ChartStyle)[]) {
+      const value = styleState[key]
+      if (value !== undefined) {
+        ;(merged[key] as ChartStyle[keyof ChartStyle]) = value
+      }
+    }
+    return merged
+  }, [styleState])
 
   function updateStyle(patch: Partial<ChartStyle>) {
     setStyleState((prev) => ({ ...prev, ...patch }))
