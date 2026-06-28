@@ -41,7 +41,7 @@ pnpm start
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GITHUB_TOKEN` or `GITHUB_TOKEN_2` | No | GitHub personal access token. Without it, the app uses the unauthenticated API (~60 requests/hour per IP). Set one of these to raise the rate limit. |
+| `GITHUB_TOKEN` | No | GitHub personal access token. Without it, the app uses the unauthenticated API (~60 requests/hour per IP). Set it to raise the rate limit. |
 
 Create a `.env.local` file in the project root:
 
