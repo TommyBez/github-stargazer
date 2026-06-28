@@ -186,3 +186,17 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Honor the OS "reduce motion" setting: neutralize entrance animations,
+   count-ups, hover scaling, and transitions so the UI stays calm for users
+   who opt out, without changing any colors, type, or layout tokens. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
