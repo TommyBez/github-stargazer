@@ -400,7 +400,7 @@ export function StarsChartApp() {
         <Button
           type="submit"
           disabled={loading || !trimmedInput}
-          className="h-12 rounded-xl bg-star px-7 font-semibold text-[oklch(0.21_0.04_75)] shadow-[0_2px_22px_-6px_var(--star-glow)] transition-all hover:bg-star-strong hover:shadow-[0_4px_30px_-6px_var(--star-glow)] sm:min-w-[160px]"
+          className="h-12 rounded-xl bg-star px-7 font-semibold text-[oklch(0.21_0.04_75)] shadow-[0_2px_22px_-6px_var(--star-glow)] transition-[background-color,box-shadow,transform] duration-200 ease-out hover:bg-star-strong hover:shadow-[0_4px_30px_-6px_var(--star-glow)] sm:min-w-[160px]"
         >
           {loading ? (
             <>
@@ -545,7 +545,7 @@ export function StarsChartApp() {
                       value={c.value}
                       aria-label={c.name}
                       title={c.name}
-                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform motion-safe:hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
+                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform duration-150 ease-out motion-safe:[@media(hover:hover)]:hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
                       style={{ backgroundColor: c.value }}
                     >
                       <Check className="size-3.5 text-white opacity-0 mix-blend-difference transition-opacity duration-150 group-data-[pressed]/toggle:opacity-100" />
