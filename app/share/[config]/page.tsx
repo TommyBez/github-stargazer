@@ -90,7 +90,7 @@ export default async function SharePage({
   return (
     <main className="m-0 flex min-h-dvh flex-col items-center justify-center gap-5 bg-background p-4">
       <ShareChartImage src={imgSrc} alt={alt} />
-      <Button render={<Link href="/" />} variant="outline">
+      <Button render={<Link href="/" />} nativeButton={false} variant="outline">
         Make your own
       </Button>
     </main>
