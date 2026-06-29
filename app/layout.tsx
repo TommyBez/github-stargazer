@@ -17,12 +17,12 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
-  title: 'GitHub Star Charts',
+  title: 'Stargazer',
   description:
     'Generate customizable star history charts for any public GitHub repository. Download as PNG or SVG, or share as an OG image.',
   generator: 'v0.app',
   openGraph: {
-    title: 'GitHub Star Charts',
+    title: 'Stargazer',
     description:
       'Generate customizable star history charts for any public GitHub repository. Download as PNG or SVG, or share as an OG image.',
     type: 'website',
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
         url: '/api/og',
         width: 1200,
         height: 630,
-        alt: 'GitHub Star Charts',
+        alt: 'Stargazer',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'GitHub Star Charts',
+    title: 'Stargazer',
     description:
       'Generate customizable star history charts for any public GitHub repository. Download as PNG or SVG, or share as an OG image.',
     images: ['/api/og'],

@@ -31,7 +31,7 @@ const FALLBACK_CACHE_CONTROL = "public, max-age=60"
 
 // Characters that may appear in the OG image. Used to subset the embedded font.
 const FONT_TEXT_BASE =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-—/:_&★kStarHistoryNotFound"
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,-—/:_&★kStargazerStarHistoryNotFound"
 
 // Fonts are fetched from Google's CDN at render time. A social crawler
 // (X/Twitter, …) gives the image only a few seconds before it gives up and
@@ -337,7 +337,7 @@ export async function renderOgImage(searchParams: URLSearchParams): Promise<Imag
           <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9.9l6.9-.8z" />
         </svg>
         <div style={{ display: "flex", fontSize: 72, fontWeight: 800, lineHeight: 1.05 }}>
-          {isNoRepo ? "Star Charts" : "Star History"}
+          {isNoRepo ? "Stargazer" : "Star History"}
         </div>
         <div style={{ display: "flex", fontSize: 28, opacity: 0.7, marginTop: 16, maxWidth: 900 }}>
           {isNoRepo
