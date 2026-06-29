@@ -400,7 +400,7 @@ export function StarsChartApp() {
         <Button
           type="submit"
           disabled={loading || !trimmedInput}
-          className="h-12 rounded-xl bg-star px-7 font-semibold text-[oklch(0.21_0.04_75)] shadow-[0_2px_22px_-6px_var(--star-glow)] transition-all hover:bg-star-strong hover:shadow-[0_4px_30px_-6px_var(--star-glow)] sm:min-w-[160px]"
+          className="h-12 rounded-xl bg-star px-7 font-semibold text-[oklch(0.21_0.04_75)] shadow-[0_2px_22px_-6px_var(--star-glow)] transition-[background-color,box-shadow,transform] duration-200 ease-out hover:bg-star-strong hover:shadow-[0_4px_30px_-6px_var(--star-glow)] sm:min-w-[160px]"
         >
           {loading ? (
             <>
@@ -449,13 +449,20 @@ export function StarsChartApp() {
               )}
             </Card>
             <div className="flex flex-wrap items-center gap-3">
+              {/* Labels stay constant so the buttons never reflow on success —
+                  the check icon is the visible confirmation, and the live
+                  region below announces it for screen readers. Mirrors the
+                  Copy-link button below. */}
+              <span role="status" aria-live="polite" className="sr-only">
+                {downloaded === "png" ? "Saved PNG." : downloaded === "svg" ? "Saved SVG." : ""}
+              </span>
               <Button onClick={handleDownloadPng} variant="default">
                 {downloaded === "png" ? (
                   <Check className="size-4 text-emerald-400" />
                 ) : (
                   <ImageDown className="size-4" />
                 )}
-                {downloaded === "png" ? "Saved PNG" : "Download PNG"}
+                Download PNG
               </Button>
               <Button onClick={handleDownloadSvg} variant="secondary">
                 {downloaded === "svg" ? (
@@ -463,7 +470,7 @@ export function StarsChartApp() {
                 ) : (
                   <FileDown className="size-4" />
                 )}
-                {downloaded === "svg" ? "Saved SVG" : "Download SVG"}
+                Download SVG
               </Button>
               <div className="ml-auto flex items-center gap-2 rounded-full border border-star/20 bg-star-soft px-3.5 py-1.5 font-mono text-sm text-foreground">
                 <Star className="size-4 fill-star text-star" />
@@ -545,7 +552,7 @@ export function StarsChartApp() {
                       value={c.value}
                       aria-label={c.name}
                       title={c.name}
-                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform motion-safe:hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
+                      className="relative size-7 rounded-full border-2 border-transparent p-0 transition-transform duration-150 ease-out motion-safe:[@media(hover:hover)]:hover:scale-110 data-[pressed]:scale-110 data-[pressed]:border-foreground data-[pressed]:bg-transparent"
                       style={{ backgroundColor: c.value }}
                     >
                       <Check className="size-3.5 text-white opacity-0 mix-blend-difference transition-opacity duration-150 group-data-[pressed]/toggle:opacity-100" />
