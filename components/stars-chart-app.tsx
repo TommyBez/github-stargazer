@@ -449,13 +449,20 @@ export function StarsChartApp() {
               )}
             </Card>
             <div className="flex flex-wrap items-center gap-3">
+              {/* Labels stay constant so the buttons never reflow on success —
+                  the check icon is the visible confirmation, and the live
+                  region below announces it for screen readers. Mirrors the
+                  Copy-link button below. */}
+              <span role="status" aria-live="polite" className="sr-only">
+                {downloaded === "png" ? "Saved PNG." : downloaded === "svg" ? "Saved SVG." : ""}
+              </span>
               <Button onClick={handleDownloadPng} variant="default">
                 {downloaded === "png" ? (
                   <Check className="size-4 text-emerald-400" />
                 ) : (
                   <ImageDown className="size-4" />
                 )}
-                {downloaded === "png" ? "Saved PNG" : "Download PNG"}
+                Download PNG
               </Button>
               <Button onClick={handleDownloadSvg} variant="secondary">
                 {downloaded === "svg" ? (
@@ -463,7 +470,7 @@ export function StarsChartApp() {
                 ) : (
                   <FileDown className="size-4" />
                 )}
-                {downloaded === "svg" ? "Saved SVG" : "Download SVG"}
+                Download SVG
               </Button>
               <div className="ml-auto flex items-center gap-2 rounded-full border border-star/20 bg-star-soft px-3.5 py-1.5 font-mono text-sm text-foreground">
                 <Star className="size-4 fill-star text-star" />
