@@ -1,4 +1,4 @@
-/* Hallmark · genre: modern-minimal · macrostructure: Workbench · theme: Cobalt-structured amber-anchored · nav: N9 edge-aligned · footer: Ft2 inline · tone: technical */
+/* Hallmark · genre: atmospheric · macrostructure: Marquee Hero · theme: custom champagne-gold on warm near-black (tuned, brand-anchored) · nav: N10 scroll-morph · footer: Ft5 statement · tone: premium */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -11,6 +11,9 @@
   --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
   --color-star: var(--star);
   --color-star-soft: var(--star-soft);
+  --color-star-strong: var(--star-strong);
+  --color-star-glow: var(--star-glow);
+  --color-surface-highlight: var(--surface-highlight);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,38 +52,44 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 :root {
   color-scheme: light;
-  /* Cobalt-structured, amber-anchored modern-minimal: cool engineered near-white
-     paper, near-black ink, hairline rules, single warm star-gold accent. */
-  --background: oklch(0.992 0.002 250);
-  --foreground: oklch(0.18 0.01 260);
+  /* Premium light: a clean, faintly-cool paper with warm champagne-gold as the
+     single chromatic anchor. Surfaces float on soft, low-spread shadows. */
+  --background: oklch(0.994 0.002 250);
+  --foreground: oklch(0.17 0.012 262);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.01 260);
+  --card-foreground: oklch(0.17 0.012 262);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.01 260);
-  --primary: oklch(0.2 0.012 260);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.965 0.003 250);
-  --secondary-foreground: oklch(0.2 0.012 260);
-  --muted: oklch(0.965 0.003 250);
-  --muted-foreground: oklch(0.5 0.01 260);
-  --accent: oklch(0.965 0.003 250);
-  --accent-foreground: oklch(0.2 0.012 260);
+  --popover-foreground: oklch(0.17 0.012 262);
+  --primary: oklch(0.19 0.014 262);
+  --primary-foreground: oklch(0.985 0.002 95);
+  --secondary: oklch(0.97 0.003 250);
+  --secondary-foreground: oklch(0.2 0.014 262);
+  --muted: oklch(0.968 0.003 250);
+  --muted-foreground: oklch(0.49 0.012 262);
+  --accent: oklch(0.965 0.004 250);
+  --accent-foreground: oklch(0.2 0.014 262);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0.004 255);
-  --input: oklch(0.91 0.004 255);
-  --ring: oklch(0.78 0.15 85);
-  --star: oklch(0.852 0.176 91.8);
-  --star-soft: oklch(0.852 0.176 91.8 / 0.14);
+  --border: oklch(0.915 0.005 258);
+  --input: oklch(0.9 0.005 258);
+  --ring: oklch(0.78 0.15 88);
+  --star: oklch(0.78 0.16 78);
+  --star-strong: oklch(0.7 0.16 70);
+  --star-soft: oklch(0.82 0.17 88 / 0.16);
+  --star-glow: oklch(0.82 0.17 88 / 0.2);
+  --surface-highlight: oklch(1 0 0 / 0.7);
+  --shadow-color: 262 18% 30%;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.4rem;
+  --radius: 0.65rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -91,28 +100,34 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Single source of truth for the premium dark canvas — applied both by the
+   explicit `.dark` class and by the OS preference block below. */
 .dark {
   color-scheme: dark;
-  --background: oklch(0.16 0.008 260);
-  --foreground: oklch(0.97 0.004 250);
-  --card: oklch(0.205 0.008 260);
-  --card-foreground: oklch(0.97 0.004 250);
-  --popover: oklch(0.205 0.008 260);
-  --popover-foreground: oklch(0.97 0.004 250);
-  --primary: oklch(0.95 0.004 250);
-  --primary-foreground: oklch(0.2 0.01 260);
-  --secondary: oklch(0.27 0.008 260);
-  --secondary-foreground: oklch(0.97 0.004 250);
-  --muted: oklch(0.27 0.008 260);
-  --muted-foreground: oklch(0.72 0.008 260);
-  --accent: oklch(0.27 0.008 260);
-  --accent-foreground: oklch(0.97 0.004 250);
+  --background: oklch(0.155 0.014 264);
+  --foreground: oklch(0.965 0.006 250);
+  --card: oklch(0.202 0.014 263);
+  --card-foreground: oklch(0.965 0.006 250);
+  --popover: oklch(0.212 0.015 263);
+  --popover-foreground: oklch(0.965 0.006 250);
+  --primary: oklch(0.95 0.006 250);
+  --primary-foreground: oklch(0.19 0.012 263);
+  --secondary: oklch(0.255 0.013 263);
+  --secondary-foreground: oklch(0.965 0.006 250);
+  --muted: oklch(0.252 0.013 263);
+  --muted-foreground: oklch(0.72 0.012 260);
+  --accent: oklch(0.262 0.014 263);
+  --accent-foreground: oklch(0.965 0.006 250);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 13%);
   --ring: oklch(0.852 0.176 91.8);
-  --star: oklch(0.852 0.176 91.8);
+  --star: oklch(0.86 0.172 92);
+  --star-strong: oklch(0.9 0.16 95);
   --star-soft: oklch(0.852 0.176 91.8 / 0.16);
+  --star-glow: oklch(0.852 0.176 91.8 / 0.32);
+  --surface-highlight: oklch(1 0 0 / 0.07);
+  --shadow-color: 264 40% 2%;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -131,26 +146,30 @@
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     color-scheme: dark;
-    --background: oklch(0.16 0.008 260);
-    --foreground: oklch(0.97 0.004 250);
-    --card: oklch(0.205 0.008 260);
-    --card-foreground: oklch(0.97 0.004 250);
-    --popover: oklch(0.205 0.008 260);
-    --popover-foreground: oklch(0.97 0.004 250);
-    --primary: oklch(0.95 0.004 250);
-    --primary-foreground: oklch(0.2 0.01 260);
-    --secondary: oklch(0.27 0.008 260);
-    --secondary-foreground: oklch(0.97 0.004 250);
-    --muted: oklch(0.27 0.008 260);
-    --muted-foreground: oklch(0.72 0.008 260);
-    --accent: oklch(0.27 0.008 260);
-    --accent-foreground: oklch(0.97 0.004 250);
+    --background: oklch(0.155 0.014 264);
+    --foreground: oklch(0.965 0.006 250);
+    --card: oklch(0.202 0.014 263);
+    --card-foreground: oklch(0.965 0.006 250);
+    --popover: oklch(0.212 0.015 263);
+    --popover-foreground: oklch(0.965 0.006 250);
+    --primary: oklch(0.95 0.006 250);
+    --primary-foreground: oklch(0.19 0.012 263);
+    --secondary: oklch(0.255 0.013 263);
+    --secondary-foreground: oklch(0.965 0.006 250);
+    --muted: oklch(0.252 0.013 263);
+    --muted-foreground: oklch(0.72 0.012 260);
+    --accent: oklch(0.262 0.014 263);
+    --accent-foreground: oklch(0.965 0.006 250);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
+    --border: oklch(1 0 0 / 8%);
+    --input: oklch(1 0 0 / 13%);
     --ring: oklch(0.852 0.176 91.8);
-    --star: oklch(0.852 0.176 91.8);
+    --star: oklch(0.86 0.172 92);
+    --star-strong: oklch(0.9 0.16 95);
     --star-soft: oklch(0.852 0.176 91.8 / 0.16);
+    --star-glow: oklch(0.852 0.176 91.8 / 0.32);
+    --surface-highlight: oklch(1 0 0 / 0.07);
+    --shadow-color: 264 40% 2%;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -177,13 +196,71 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Refined kerning + default OpenType figures for a premium feel. */
+    font-feature-settings: 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
   }
   html {
     @apply font-sans;
   }
+  .font-heading {
+    font-feature-settings: 'ss01', 'ss02';
+    letter-spacing: -0.011em;
+  }
   /* Tabular figures for the star counts / numeric meta. */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* ── Atmospheric backdrop ───────────────────────────────────────────
+     A fixed, non-interactive field behind the page: one warm gold bloom
+     up top, plus a fine grid mesh masked to fade outward. Tier-A CSS,
+     no images, no fake chrome. */
+  .atmosphere {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        60rem 38rem at 50% -8rem,
+        var(--star-glow),
+        transparent 70%
+      );
+  }
+  .atmosphere::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    background-position: center top;
+    opacity: 0.55;
+    -webkit-mask-image: radial-gradient(60rem 42rem at 50% -2rem, #000 10%, transparent 72%);
+    mask-image: radial-gradient(60rem 42rem at 50% -2rem, #000 10%, transparent 72%);
+  }
+
+  /* Champagne-gold gradient lettering for a single accent word. */
+  .text-gold-gradient {
+    background-image: linear-gradient(
+      176deg,
+      var(--star-strong),
+      var(--star) 55%,
+      color-mix(in oklab, var(--star) 78%, var(--color-foreground))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* A small, glowing brand mark used in the masthead and footer. */
+  .star-emblem {
+    box-shadow: 0 0 0 1px var(--star-soft), 0 6px 20px -8px var(--star-glow);
   }
 }
 
