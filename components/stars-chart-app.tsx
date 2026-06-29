@@ -28,6 +28,12 @@ import type { RepoStarData } from "@/lib/github"
 
 const PREVIEW_W = 1000
 const PREVIEW_H = 500
+
+// Premium card surface: composes with the Card primitive's hairline ring,
+// adding a top catch-light + a soft, low-spread drop shadow. Applied via
+// className so the shadcn primitives stay untouched.
+const PREMIUM_CARD =
+  "rounded-2xl shadow-[0_1px_0_0_var(--surface-highlight)_inset,0_2px_4px_-2px_hsl(var(--shadow-color)/0.5),0_18px_44px_-24px_hsl(var(--shadow-color)/0.65)]"
 const CLIPBOARD_API_TIMEOUT_MS = 700
 const COPY_FEEDBACK_MS = 4000
 const DOWNLOAD_FEEDBACK_MS = 2200
@@ -367,13 +373,13 @@ export function StarsChartApp() {
       {/* Search */}
       <form onSubmit={handleGenerate} className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Star className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Star className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             ref={inputRef}
             value={repoInput}
             onChange={(e) => setRepoInput(e.target.value)}
             placeholder="owner/repo  or  https://github.com/owner/repo"
-            className="h-11 pl-9 pr-10 font-mono text-sm"
+            className="h-12 rounded-xl bg-card/60 pl-10 pr-10 font-mono text-sm shadow-[0_1px_2px_-1px_hsl(var(--shadow-color)/0.4)] backdrop-blur-sm transition-shadow focus-visible:shadow-[0_0_0_4px_var(--star-soft)]"
             aria-label="GitHub repository"
             autoComplete="off"
             autoCapitalize="off"
@@ -385,7 +391,7 @@ export function StarsChartApp() {
               type="button"
               onClick={handleClearInput}
               aria-label="Clear repository"
-              className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="absolute right-2.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <X className="size-3.5" />
             </button>
@@ -394,7 +400,7 @@ export function StarsChartApp() {
         <Button
           type="submit"
           disabled={loading || !trimmedInput}
-          className="h-11 px-6 sm:min-w-[150px]"
+          className="h-12 rounded-xl bg-star px-7 font-semibold text-[oklch(0.21_0.04_75)] shadow-[0_2px_22px_-6px_var(--star-glow)] transition-all hover:bg-star-strong hover:shadow-[0_4px_30px_-6px_var(--star-glow)] sm:min-w-[160px]"
         >
           {loading ? (
             <>
@@ -425,7 +431,7 @@ export function StarsChartApp() {
         <div className="grid gap-6 duration-500 animate-in fade-in slide-in-from-bottom-2 lg:grid-cols-[1fr_320px]">
           {/* Chart preview + downloads */}
           <div className="flex flex-col gap-4">
-            <Card className="relative overflow-hidden p-0">
+            <Card className={`relative overflow-hidden p-0 ${PREMIUM_CARD}`}>
               <div
                 className={`w-full transition-opacity duration-200 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full ${
                   previewPending ? "opacity-60" : "opacity-100"
@@ -459,18 +465,21 @@ export function StarsChartApp() {
                 )}
                 {downloaded === "svg" ? "Saved SVG" : "Download SVG"}
               </Button>
-              <div className="ml-auto flex items-center gap-1.5 font-mono text-sm text-foreground">
+              <div className="ml-auto flex items-center gap-2 rounded-full border border-star/20 bg-star-soft px-3.5 py-1.5 font-mono text-sm text-foreground">
                 <Star className="size-4 fill-star text-star" />
-                <span className="tabular-nums">{animatedStars.toLocaleString()}</span>
+                <span className="font-semibold tabular-nums">{animatedStars.toLocaleString()}</span>
                 <span className="text-muted-foreground">stars</span>
               </div>
             </div>
           </div>
 
           {/* Customization panel */}
-          <Card className="flex h-fit flex-col gap-5 p-5 lg:sticky lg:top-6">
+          <Card className={`flex h-fit flex-col gap-5 p-5 lg:sticky lg:top-24 ${PREMIUM_CARD}`}>
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <h2 className="font-heading text-sm font-semibold tracking-tight">Customize</h2>
+              <h2 className="flex items-center gap-2 font-heading text-sm font-semibold tracking-tight">
+                <span className="size-1.5 rounded-full bg-star" aria-hidden="true" />
+                Customize
+              </h2>
               <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
                 Controls
               </span>
@@ -683,9 +692,9 @@ export function StarsChartApp() {
 
 function EmptyState() {
   return (
-    <Card className="flex flex-col items-center gap-4 p-10 text-center duration-300 animate-in fade-in sm:p-16">
-      <span className="flex size-12 items-center justify-center rounded-lg bg-star-soft">
-        <Star className="size-5 fill-star text-star" />
+    <Card className={`flex flex-col items-center gap-4 p-10 text-center duration-300 animate-in fade-in sm:p-16 ${PREMIUM_CARD}`}>
+      <span className="star-emblem flex size-14 items-center justify-center rounded-2xl bg-star-soft">
+        <Star className="size-6 fill-star text-star" />
       </span>
       <div className="flex flex-col gap-1.5">
         <p className="font-heading text-lg font-semibold tracking-tight">
@@ -708,7 +717,7 @@ function ChartSkeleton() {
       aria-hidden="true"
     >
       <div className="flex flex-col gap-4">
-        <Card className="overflow-hidden p-0">
+        <Card className={`overflow-hidden p-0 ${PREMIUM_CARD}`}>
           <div className="aspect-[2/1] w-full animate-pulse bg-muted" />
         </Card>
         <div className="flex flex-wrap items-center gap-3">
@@ -717,7 +726,7 @@ function ChartSkeleton() {
           <div className="ml-auto h-5 w-24 animate-pulse rounded bg-muted" />
         </div>
       </div>
-      <Card className="flex h-fit flex-col gap-5 p-5">
+      <Card className={`flex h-fit flex-col gap-5 p-5 ${PREMIUM_CARD}`}>
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="h-4 w-20 animate-pulse rounded bg-muted" />
           <div className="h-3 w-14 animate-pulse rounded bg-muted" />
