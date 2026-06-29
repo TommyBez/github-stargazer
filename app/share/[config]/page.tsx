@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { ShareChartImage } from "@/components/share-chart-image"
 import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-image"
 import { decodeShareConfig } from "@/lib/share-config"
 import { getRequestOrigin } from "@/lib/site-url"
@@ -88,14 +89,7 @@ export default async function SharePage({
 
   return (
     <main className="m-0 flex min-h-dvh flex-col items-center justify-center gap-5 bg-background p-4">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={imgSrc || "/placeholder.svg"}
-        alt={alt}
-        width={1200}
-        height={630}
-        className="block h-auto w-full max-w-[1200px] rounded-xl"
-      />
+      <ShareChartImage src={imgSrc} alt={alt} />
       <Button render={<Link href="/" />} variant="outline">
         Make your own
       </Button>
